@@ -5,13 +5,14 @@ public enum ActionName {
     LOAD_CONFIG("/viewer-config"),
     API_LOAD_FILE_TREE("/loadFileTree"),
     API_LOAD_DOCUMENT_DESCRIPTION("/loadDocumentDescription"),
-    API_DOWNLOAD_DOCUMENT(""),
-    API_UPLOAD_DOCUMENT(""),
-    API_LOAD_DOCUMENT_PAGES(""),
+    API_LOAD_DOCUMENT_PAGE_RESOURCE("/loadDocumentPageResource"),
+    API_DOWNLOAD_DOCUMENT("/downloadDocument"),
+    API_UPLOAD_DOCUMENT("/uploadDocument"),
+    API_LOAD_DOCUMENT_PAGES("/loadDocumentPages"),
+    API_PRINT_PDF("/printPdf"),
+/*
     API_LOAD_DOCUMENT_PAGE(""),
-    API_LOAD_DOCUMENT_PAGE_RESOURCE(""),
-    API_LOAD_THUMBNAILS(""),
-    API_PRINT_PDF("");
+    API_LOAD_THUMBNAILS(""),*/;
 
     private String _url;
 

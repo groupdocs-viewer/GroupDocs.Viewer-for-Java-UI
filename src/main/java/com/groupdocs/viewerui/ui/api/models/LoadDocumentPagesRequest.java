@@ -1,19 +1,24 @@
 package com.groupdocs.viewerui.ui.api.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class LoadDocumentPagesRequest {
 
+	@JsonProperty("guid")
 	private String _guid;
 
+	@JsonProperty("fileType")
 	private String _fileType;
 
+	@JsonProperty("password")
 	private String _password;
 
+	@JsonProperty("pages")
 	private int[] _pages;
 
 	/**
 	 * File unique ID.
 	 */
-	// [JsonPropertyName("guid")]
 	public String getGuid() {
 		return _guid;
 	}
@@ -25,7 +30,6 @@ public class LoadDocumentPagesRequest {
 	/**
 	 * File type e.g. "docx".
 	 */
-	// [JsonPropertyName("fileType")]
 	public String getFileType() {
 		return _fileType;
 	}
@@ -37,7 +41,6 @@ public class LoadDocumentPagesRequest {
 	/**
 	 * The password to open a document.
 	 */
-	// [JsonPropertyName("password")]
 	public String getPassword() {
 		return _password;
 	}
@@ -49,7 +52,6 @@ public class LoadDocumentPagesRequest {
 	/**
 	 * The pages to return.
 	 */
-	// [JsonPropertyName("pages")]
 	public int[] getPages() {
 		return _pages;
 	}

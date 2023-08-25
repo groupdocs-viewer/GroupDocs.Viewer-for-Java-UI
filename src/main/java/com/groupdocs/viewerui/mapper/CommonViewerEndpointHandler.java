@@ -3,8 +3,8 @@ package com.groupdocs.viewerui.mapper;
 import com.groupdocs.viewerui.Keys;
 import com.groupdocs.viewerui.exception.ViewerUiException;
 import com.groupdocs.viewerui.function.HeaderAdder;
-import com.groupdocs.viewerui.ui.api.IUiConfigProvider;
 import com.groupdocs.viewerui.ui.api.UiConfigProvider;
+import com.groupdocs.viewerui.ui.api.UiConfigProviderFactory;
 import com.groupdocs.viewerui.ui.api.controller.ViewerController;
 import com.groupdocs.viewerui.ui.api.factory.DefaultViewerControllerFactory;
 import com.groupdocs.viewerui.ui.api.factory.DefaultViewerFactory;
@@ -12,8 +12,7 @@ import com.groupdocs.viewerui.ui.api.factory.ViewerControllerFactory;
 import com.groupdocs.viewerui.ui.api.factory.ViewerFactory;
 import com.groupdocs.viewerui.ui.api.infrastructure.ViewerActionResult;
 import com.groupdocs.viewerui.ui.api.local.storage.LocalFileStorage;
-import com.groupdocs.viewerui.ui.api.models.LoadDocumentDescriptionRequest;
-import com.groupdocs.viewerui.ui.api.models.LoadFileTreeRequest;
+import com.groupdocs.viewerui.ui.api.models.*;
 import com.groupdocs.viewerui.ui.configuration.ApiOptions;
 import com.groupdocs.viewerui.ui.configuration.UiOptions;
 import com.groupdocs.viewerui.ui.configuration.ViewerConfig;
@@ -21,6 +20,7 @@ import com.groupdocs.viewerui.ui.core.*;
 import com.groupdocs.viewerui.ui.core.configuration.Config;
 import com.groupdocs.viewerui.ui.core.entities.ConfigEntry;
 import com.groupdocs.viewerui.ui.core.extensions.StringExtensions;
+import com.groupdocs.viewerui.ui.core.extensions.UrlExtensions;
 import com.groupdocs.viewerui.ui.core.serialize.ISerializer;
 import com.groupdocs.viewerui.ui.core.serialize.JacksonJsonSerializer;
 import org.apache.commons.io.IOUtils;
@@ -33,10 +33,11 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-public class CommonEndpointMapper {
+public class CommonViewerEndpointHandler {
     public static final String CONTENT_TYPE = "Content-Type";
     private UiOptions _uiOptions = new UiOptions();
 
@@ -54,25 +55,23 @@ public class CommonEndpointMapper {
     private IActionNameDetector _requestDetector;
 
     private ISerializer _serializer;
-
-    private IUiConfigProvider _configProvider;
     private LocalFileStorage _fileStorage;
     private ViewerFactory _viewerFactory;
     private ViewerControllerFactory _viewerControllerFactory;
 
-    private CommonEndpointMapper() {
+    private CommonViewerEndpointHandler() {
     }
 
-    public static CommonEndpointMapper setupGroupDocsViewer(BiConsumer<ViewerConfig, Config> configConsumer) {
-        final CommonEndpointMapper commonEndpointMapper = new CommonEndpointMapper();
-        final ViewerConfig viewerConfig = commonEndpointMapper.getViewerConfig();
-        final Config config = commonEndpointMapper.getConfig();
+    public static CommonViewerEndpointHandler setupGroupDocsViewer(BiConsumer<ViewerConfig, Config> configConsumer) {
+        final CommonViewerEndpointHandler commonViewerEndpointHandler = new CommonViewerEndpointHandler();
+        final ViewerConfig viewerConfig = commonViewerEndpointHandler.getViewerConfig();
+        final Config config = commonViewerEndpointHandler.getConfig();
         configConsumer.accept(viewerConfig, config);
         // TODO: Some checks
-        return commonEndpointMapper;
+        return commonViewerEndpointHandler;
     }
 
-    public CommonEndpointMapper setupGroupDocsViewerUI(Consumer<UiOptions> optionsConsumer) {
+    public CommonViewerEndpointHandler setupGroupDocsViewerUI(Consumer<UiOptions> optionsConsumer) {
         optionsConsumer.accept(this._uiOptions);
 
         final String uiPath = this._uiOptions.getUiPath();
@@ -83,12 +82,12 @@ public class CommonEndpointMapper {
         return this;
     }
 
-    public CommonEndpointMapper setupGroupDocsViewerApi(Consumer<ApiOptions> optionsConsumer) {
+    public CommonViewerEndpointHandler setupGroupDocsViewerApi(Consumer<ApiOptions> optionsConsumer) {
         setupGroupDocsViewerApi(optionsConsumer, new DefaultViewerFactory(), new DefaultViewerControllerFactory());
         return this;
     }
 
-    public CommonEndpointMapper setupGroupDocsViewerApi(Consumer<ApiOptions> optionsConsumer, ViewerFactory viewerFactory, ViewerControllerFactory viewerControllerFactory) {
+    public CommonViewerEndpointHandler setupGroupDocsViewerApi(Consumer<ApiOptions> optionsConsumer, ViewerFactory viewerFactory, ViewerControllerFactory viewerControllerFactory) {
         optionsConsumer.accept(this._apiOptions);
 
         final String apiEndpoint = this._apiOptions.getApiEndpoint();
@@ -106,17 +105,14 @@ public class CommonEndpointMapper {
         return this;
     }
 
-    public CommonEndpointMapper setupLocalStorage(Path storagePath) {
+    public CommonViewerEndpointHandler setupLocalStorage(Path storagePath) {
         _fileStorage = new LocalFileStorage(storagePath);
         return this;
     }
 
-    public int handleViewerRequest(String requestUrl, InputStream requestStream, HeaderAdder headerAdder, OutputStream responseStream) {
-        final ViewerFactory viewerFactory = getViewerFactory();
+    public int handleViewerRequest(String requestUrl, String queryString, InputStream requestStream, HeaderAdder headerAdder, OutputStream responseStream) {
         final ViewerControllerFactory viewerControllerFactory = getViewerControllerFactory();
-        final ViewerConfig viewerConfig = getViewerConfig();
-        final ApiOptions apiOptions = getApiOptions();
-        final IViewer viewer = viewerFactory.createViewer(viewerConfig, apiOptions, () -> _fileStorage); // it
+        final IViewer viewer = createViewer();
         final Config config = getConfig();
         // will be disposed by viewerController
         try (ViewerController viewerController = viewerControllerFactory.createViewerController(config, viewer, () -> _fileStorage)) {
@@ -131,7 +127,7 @@ public class CommonEndpointMapper {
                 case LOAD_CONFIG:
                     return handleConfigRequest(headerAdder, responseStream);
                 default:
-                    return handleApiRequest(viewerController, actionName, requestStream, headerAdder, responseStream);
+                    return handleApiRequest(viewerController, actionName, queryString, requestStream, headerAdder, responseStream);
             }
         } catch (ViewerUiException e) {
             throw e;
@@ -140,7 +136,29 @@ public class CommonEndpointMapper {
         }
     }
 
-    public int handleUiRequest(String requestUrl, HeaderAdder headerAdder, OutputStream responseStream)
+    private IViewer createViewer() {
+        final ViewerFactory viewerFactory = getViewerFactory();
+        final ViewerConfig viewerConfig = getViewerConfig();
+        final ApiOptions apiOptions = getApiOptions();
+        final IViewer viewer = viewerFactory.createViewer(viewerConfig, apiOptions, () -> _fileStorage); // it
+        return viewer;
+    }
+
+    public int handleViewerUploadRequest(InputStream submittedFileStream, String submittedFileName, boolean isRewrite, HeaderAdder headerAdder, OutputStream responseStream) {
+        final ViewerControllerFactory viewerControllerFactory = getViewerControllerFactory();
+        final IViewer viewer = createViewer();
+        final Config config = getConfig();
+        final ISerializer serializer = getSerializer();
+        // will be disposed by viewerController
+        try (ViewerController viewerController = viewerControllerFactory.createViewerController(config, viewer, () -> _fileStorage)) {
+            final ViewerActionResult uploadDocumentResult = viewerController.uploadDocument(submittedFileName, submittedFileStream, isRewrite);
+            headerAdder.addHeader(CONTENT_TYPE, uploadDocumentResult.getContentType());
+            serializer.serialize(uploadDocumentResult.getValue(), responseStream);
+            return uploadDocumentResult.getStatusCode();
+        }
+    }
+
+    private int handleUiRequest(String requestUrl, HeaderAdder headerAdder, OutputStream responseStream)
             throws IOException {
         final UiResource uiResource = prepareUiResourceForResponse(requestUrl);
 
@@ -153,13 +171,13 @@ public class CommonEndpointMapper {
         return HttpURLConnection.HTTP_OK;
     }
 
-    public int handleConfigRequest(HeaderAdder headerAdder, OutputStream responseStream) throws IOException {
+    private int handleConfigRequest(HeaderAdder headerAdder, OutputStream responseStream) throws IOException {
         final ConfigEntryFactory configEntryFactory = getConfigEntryFactory();
         final Config config = getConfig();
         final ViewerConfig viewerConfig = getViewerConfig();
 
         headerAdder.addHeader(CONTENT_TYPE, "application/json");
-        final IUiConfigProvider configProvider = getConfigProvider();
+        final UiConfigProvider configProvider = UiConfigProviderFactory.getInstance();
         config.setViewerType(viewerConfig.getViewerType());
         configProvider.configureUI(config);
         final ConfigEntry configEntry = configEntryFactory.createConfigEntry(config);
@@ -170,9 +188,13 @@ public class CommonEndpointMapper {
         return HttpURLConnection.HTTP_OK;
     }
 
-    public int handleApiRequest(ViewerController viewerController, ActionName actionName, InputStream requestStream, HeaderAdder headerAdder, OutputStream responseStream) {
+    private int handleApiRequest(ViewerController viewerController, ActionName actionName, String queryString, InputStream requestStream, HeaderAdder headerAdder, OutputStream responseStream) {
         final ISerializer serializer = getSerializer();
         switch (actionName) {
+            case UI_RESOURCE:
+                break;
+            case LOAD_CONFIG:
+                break;
             case API_LOAD_FILE_TREE:
                 LoadFileTreeRequest fileTreeRequest = serializer.deserialize(requestStream, LoadFileTreeRequest.class);
                 final ViewerActionResult fileTreeResult = viewerController.loadFileTree(fileTreeRequest);
@@ -185,23 +207,102 @@ public class CommonEndpointMapper {
                 headerAdder.addHeader(CONTENT_TYPE, documentDescriptionResult.getContentType());
                 serializer.serialize(documentDescriptionResult.getValue(), responseStream);
                 return documentDescriptionResult.getStatusCode();
-            case API_DOWNLOAD_DOCUMENT:
-                break;
-            case API_UPLOAD_DOCUMENT:
-                break;
-            case API_LOAD_DOCUMENT_PAGES:
-                break;
-            case API_LOAD_DOCUMENT_PAGE:
-                break;
             case API_LOAD_DOCUMENT_PAGE_RESOURCE:
-                break;
-            case API_LOAD_THUMBNAILS:
-                break;
+                LoadDocumentPageResourceRequest documentPageResourceRequest = createFromQueryString(queryString);
+                final ViewerActionResult documentPageResourceResult = viewerController.loadDocumentPageResource(documentPageResourceRequest);
+                headerAdder.addHeader(CONTENT_TYPE, documentPageResourceResult.getContentType());
+                final int documentPageResourceStatusCode = documentPageResourceResult.getStatusCode();
+                if (documentPageResourceStatusCode == HttpURLConnection.HTTP_OK) {
+                    final Object documentPageResourceResultValue = documentPageResourceResult.getValue();
+                    if (documentPageResourceResultValue instanceof byte[]) {
+                        try {
+                            responseStream.write((byte[]) documentPageResourceResultValue);
+                        } catch (IOException e) {
+                            e.printStackTrace(); // TODO: Add logging
+                            throw new RuntimeException(e);
+                        }
+                    } else {
+                        // TODO: Log warning
+                    }
+                } else {
+                    serializer.serialize(documentPageResourceResult.getValue(), responseStream);
+                }
+                return documentPageResourceResult.getStatusCode();
+            case API_DOWNLOAD_DOCUMENT:
+                final Map<String, String> queryParams = UrlExtensions.extractParams(queryString);
+                final String filePath = queryParams.get("path");
+                final ViewerActionResult downloadDocumentResult = viewerController.downloadDocument(filePath);
+                headerAdder.addHeader(CONTENT_TYPE, downloadDocumentResult.getContentType());
+                final int downloadDocumentStatusCode = downloadDocumentResult.getStatusCode();
+                if (downloadDocumentStatusCode == HttpURLConnection.HTTP_OK) {
+                    final Object downloadDocumentResultValue = downloadDocumentResult.getValue();
+                    if (downloadDocumentResultValue instanceof FileResponse) {
+                        final FileResponse fileResponse = (FileResponse) downloadDocumentResultValue;
+                        headerAdder.addHeader("Content-Length", Long.toString(fileResponse.data.length));
+                        headerAdder.addHeader("Content-Disposition", "attachment; filename=\"" + fileResponse.fileName + "\"; filename*=UTF-8''" + fileResponse.fileName);
+                        try {
+                            responseStream.write(fileResponse.data);
+                        } catch (IOException e) {
+                            e.printStackTrace(); // TODO: Add logging
+                            throw new RuntimeException(e);
+                        }
+                    } else {
+                        // TODO: Log warning
+                    }
+                } else {
+                    serializer.serialize(downloadDocumentResult.getValue(), responseStream);
+                }
+                return downloadDocumentStatusCode;
+            case API_LOAD_DOCUMENT_PAGES:
+                LoadDocumentPagesRequest documentPagesRequest = serializer.deserialize(requestStream, LoadDocumentPagesRequest.class);
+                final ViewerActionResult documentPagesResult = viewerController.loadDocumentPages(documentPagesRequest);
+                headerAdder.addHeader(CONTENT_TYPE, documentPagesResult.getContentType());
+                serializer.serialize(documentPagesResult.getValue(), responseStream);
+                return documentPagesResult.getStatusCode();
             case API_PRINT_PDF:
-                break;
+                PrintPdfRequest printPdfRequest = serializer.deserialize(requestStream, PrintPdfRequest.class);
+                final ViewerActionResult printPdfResult = viewerController.printPdf(printPdfRequest);
+                headerAdder.addHeader(CONTENT_TYPE, printPdfResult.getContentType());
+                final int printPdfStatusCode = printPdfResult.getStatusCode();
+                if (printPdfStatusCode == HttpURLConnection.HTTP_OK) {
+                    final Object printPdfResultValue = printPdfResult.getValue();
+                    if (printPdfResultValue instanceof FileResponse) {
+                        final FileResponse fileResponse = (FileResponse) printPdfResultValue;
+                        headerAdder.addHeader("Content-Length", Long.toString(fileResponse.data.length));
+                        headerAdder.addHeader("Content-Disposition", "attachment; filename=\"" + fileResponse.fileName + "\"; filename*=UTF-8''" + fileResponse.fileName);
+                        try {
+                            responseStream.write(fileResponse.data);
+                        } catch (IOException e) {
+                            e.printStackTrace(); // TODO: Add logging
+                            throw new RuntimeException(e);
+                        }
+                    } else {
+                        // TODO: Log warning
+                    }
+                } else {
+                    serializer.serialize(printPdfResult.getValue(), responseStream);
+                }
+                return printPdfStatusCode;
+//            case API_UPLOAD_DOCUMENT: // handleViewerUploadRequest
+
+//            case API_LOAD_DOCUMENT_PAGE:
+//                break;
+//            case API_LOAD_THUMBNAILS:
+//                break;
             default:
         }
         return HttpURLConnection.HTTP_NOT_FOUND;
+    }
+
+    private LoadDocumentPageResourceRequest createFromQueryString(String queryString) {
+        final Map<String, String> queryParams = UrlExtensions.extractParams(queryString);
+        final LoadDocumentPageResourceRequest documentPageResource = new LoadDocumentPageResourceRequest();
+        documentPageResource.setGuid(queryParams.get("guid"));
+        documentPageResource.setPassword(queryParams.get("password"));
+        documentPageResource.setFileType(queryParams.get("fileType"));
+        documentPageResource.setPageNumber(Integer.parseInt(queryParams.getOrDefault("pageNumber", "0")));
+        documentPageResource.setResourceName(queryParams.get("resourceName"));
+        return documentPageResource;
     }
 
     private UiResource prepareUiResourceForResponse(String requestUrl) throws IOException {
@@ -319,15 +420,8 @@ public class CommonEndpointMapper {
         this._serializer = serializer;
     }
 
-    public IUiConfigProvider getConfigProvider() {
-        if (this._configProvider == null) {
-            this._configProvider = new UiConfigProvider();
-        }
-        return _configProvider;
-    }
-
-    public void setConfigProvider(IUiConfigProvider configProvider) {
-        this._configProvider = configProvider;
+    public void setConfigProvider(UiConfigProvider configProvider) {
+        UiConfigProviderFactory.setInstance(configProvider);
     }
 
     public ViewerConfig getViewerConfig() {
@@ -360,5 +454,11 @@ public class CommonEndpointMapper {
 
     public void setViewerControllerFactory(ViewerControllerFactory viewerControllerFactory) {
         this._viewerControllerFactory = viewerControllerFactory;
+    }
+
+    public boolean isUploadRequest(String requestUrl) {
+        final IActionNameDetector requestDetector = getRequestDetector();
+        final ActionName actionName = requestDetector.detectActionName(requestUrl);
+        return actionName == ActionName.API_UPLOAD_DOCUMENT;
     }
 }

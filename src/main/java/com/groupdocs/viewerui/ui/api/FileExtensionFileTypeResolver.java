@@ -2,7 +2,7 @@ package com.groupdocs.viewerui.ui.api;
 
 import com.groupdocs.viewer.FileType;
 
-public class FileExtensionFileTypeResolver implements IFileTypeResolver {
+public class FileExtensionFileTypeResolver implements FileTypeResolver {
 
 	@Override
 	public FileType resolveFileType(String filePath) {

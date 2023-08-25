@@ -32,7 +32,7 @@ public abstract class Page {
 	}
 
 	public byte[] getData() {
-		return _data;
+		return (_data == null) ? new byte[0] : _data;
 	}
 
 	public void setData(byte[] data) {

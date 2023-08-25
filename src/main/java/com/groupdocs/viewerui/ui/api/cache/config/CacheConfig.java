@@ -1,7 +1,7 @@
 package com.groupdocs.viewerui.ui.api.cache.config;
 
 public class CacheConfig {
-    private int _cacheEntryExpirationTimeoutMinutes;
+    private int _cacheEntryExpirationTimeoutMinutes = 0;
 
     private boolean _groupCacheEntriesByFile;
 

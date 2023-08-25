@@ -1,10 +1,7 @@
 package com.groupdocs.viewerui.ui.api;
 
-public class SearchTermResolver implements ISearchTermResolver {
+public interface SearchTermResolver {
 
-	@Override
-	public String resolveSearchTerm(String filepath) {
-		return "";
-	}
+	String resolveSearchTerm(String filepath);
 
 }

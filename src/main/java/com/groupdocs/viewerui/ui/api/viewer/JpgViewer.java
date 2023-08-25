@@ -4,12 +4,12 @@ import com.groupdocs.viewer.Viewer;
 import com.groupdocs.viewer.options.JpgViewOptions;
 import com.groupdocs.viewer.options.ViewInfoOptions;
 import com.groupdocs.viewerui.exception.ViewerUiException;
-import com.groupdocs.viewerui.ui.api.IFileTypeResolver;
-import com.groupdocs.viewerui.ui.api.internalcaching.IInternalCache;
-import com.groupdocs.viewerui.ui.api.licensing.IViewerLicenser;
+import com.groupdocs.viewerui.ui.api.FileTypeResolver;
+import com.groupdocs.viewerui.ui.api.internalcaching.InternalCache;
+import com.groupdocs.viewerui.ui.api.licensing.ViewerLicenser;
 import com.groupdocs.viewerui.ui.configuration.ViewerConfig;
 import com.groupdocs.viewerui.ui.core.FileStorageProvider;
-import com.groupdocs.viewerui.ui.core.IPageFormatter;
+import com.groupdocs.viewerui.ui.core.PageFormatter;
 import com.groupdocs.viewerui.ui.core.entities.FileCredentials;
 import com.groupdocs.viewerui.ui.core.entities.JpgPage;
 import com.groupdocs.viewerui.ui.core.entities.Page;
@@ -23,8 +23,8 @@ public class JpgViewer extends BaseViewer {
 
 	private final ViewerConfig _viewerConfig;
 
-	public JpgViewer(ViewerConfig viewerConfig, IViewerLicenser licenser, IInternalCache internalCache,
-					 FileStorageProvider fileStorageProvider, IFileTypeResolver fileTypeResolver, IPageFormatter pageFormatter) {
+	public JpgViewer(ViewerConfig viewerConfig, ViewerLicenser licenser, InternalCache internalCache,
+                     FileStorageProvider fileStorageProvider, FileTypeResolver fileTypeResolver, PageFormatter pageFormatter) {
 		super(viewerConfig, licenser, internalCache, fileStorageProvider, fileTypeResolver, pageFormatter);
 		_viewerConfig = viewerConfig;
 	}

@@ -40,21 +40,6 @@ public class CachingViewer implements IViewer {
         return _viewer.createPage(pageNumber, data);
     }
 
-    public List<Page> getPages(FileCredentials fileCredentials, int[] pageNumbers) {
-        List<CachedPage> pagesOrNulls = getPagesOrNullsFromCache(fileCredentials.getFilePath(), pageNumbers);
-        int[] missingPageNumbers = getMissingPageNumbers(pagesOrNulls.stream());
-
-        if (missingPageNumbers.length == 0) {
-            return toPages(pagesOrNulls.stream());
-        }
-
-        List<Page> createdPages = createPages(fileCredentials, missingPageNumbers);
-
-        List<Page> pages = combine(pagesOrNulls.stream(), createdPages);
-
-        return pages;
-    }
-
     public Page getPage(FileCredentials fileCredentials, int pageNumber) {
         String cacheKey = CacheKeys.getPageCacheKey(pageNumber, getPageExtension());
         final byte[][] bytes = {_fileCache.get(cacheKey, fileCredentials.getFilePath())};
@@ -121,14 +106,27 @@ public class CachingViewer implements IViewer {
         return bytes[0];
     }
 
-    private List<String> saveResources(String filePath, int pageNumber, Stream<PageResource> pageResources) {
-
-        return pageResources.map(resource -> {
+    private void saveResources(String filePath, int pageNumber, Stream<PageResource> pageResources) {
+        pageResources.forEach(resource -> {
             String resourceCacheKey = CacheKeys.getHtmlPageResourceCacheKey(pageNumber, resource.getResourceName());
 
             _fileCache.set(resourceCacheKey, filePath, resource.getData());
-            return resourceCacheKey;
-        }).collect(Collectors.toList());
+        });
+    }
+
+    public List<Page> getPages(FileCredentials fileCredentials, int[] pageNumbers) {
+        List<CachedPage> pagesOrNulls = getPagesOrNullsFromCache(fileCredentials.getFilePath(), pageNumbers);
+        int[] missingPageNumbers = getMissingPageNumbers(pagesOrNulls.stream());
+
+        if (missingPageNumbers.length == 0) {
+            return toPages(pagesOrNulls.stream());
+        }
+
+        List<Page> createdPages = createPages(fileCredentials, missingPageNumbers);
+
+        List<Page> pages = combine(pagesOrNulls.stream(), createdPages);
+
+        return pages;
     }
 
     private List<Page> createPages(FileCredentials fileCredentials, int[] pageNumbers) {

@@ -1,6 +1,7 @@
 package com.groupdocs.viewerui.ui.api.infrastructure;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.groupdocs.viewerui.Keys;
 
 import java.net.HttpURLConnection;
 
@@ -16,7 +17,7 @@ public class ViewerActionResult {
 	private Object _value;
 
 	public ViewerActionResult(Object value) {
-		this("text/plain", HttpURLConnection.HTTP_OK, value);
+		this(Keys.DEFAULT_RESPONSE_CONTENT_TYPE, HttpURLConnection.HTTP_OK, value);
 	}
 
 	public ViewerActionResult(String contentType, int statusCode, Object value) {

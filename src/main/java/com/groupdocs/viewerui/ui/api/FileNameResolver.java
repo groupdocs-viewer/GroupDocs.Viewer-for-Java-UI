@@ -1,6 +1,6 @@
 package com.groupdocs.viewerui.ui.api;
 
-public interface IFileNameResolver {
+public interface FileNameResolver {
 
 	String resolveFileName(String filePath);
 

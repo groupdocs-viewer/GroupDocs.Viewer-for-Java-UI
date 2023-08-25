@@ -4,12 +4,12 @@ import com.groupdocs.viewer.Viewer;
 import com.groupdocs.viewer.options.HtmlViewOptions;
 import com.groupdocs.viewer.options.ViewInfoOptions;
 import com.groupdocs.viewerui.exception.ViewerUiException;
-import com.groupdocs.viewerui.ui.api.IFileTypeResolver;
-import com.groupdocs.viewerui.ui.api.internalcaching.IInternalCache;
-import com.groupdocs.viewerui.ui.api.licensing.IViewerLicenser;
+import com.groupdocs.viewerui.ui.api.FileTypeResolver;
+import com.groupdocs.viewerui.ui.api.internalcaching.InternalCache;
+import com.groupdocs.viewerui.ui.api.licensing.ViewerLicenser;
 import com.groupdocs.viewerui.ui.configuration.ViewerConfig;
 import com.groupdocs.viewerui.ui.core.FileStorageProvider;
-import com.groupdocs.viewerui.ui.core.IPageFormatter;
+import com.groupdocs.viewerui.ui.core.PageFormatter;
 import com.groupdocs.viewerui.ui.core.entities.FileCredentials;
 import com.groupdocs.viewerui.ui.core.entities.HtmlPage;
 import com.groupdocs.viewerui.ui.core.entities.Page;
@@ -23,9 +23,9 @@ public class HtmlWithEmbeddedResourcesViewer extends BaseViewer {
 
 	private ViewerConfig _viewerConfig;
 
-	public HtmlWithEmbeddedResourcesViewer(ViewerConfig viewerConfig, IViewerLicenser licenser,
-										   IInternalCache viewerCache, FileStorageProvider fileStorageProvider, IFileTypeResolver fileTypeResolver,
-										   IPageFormatter pageFormatter) {
+	public HtmlWithEmbeddedResourcesViewer(ViewerConfig viewerConfig, ViewerLicenser licenser,
+                                           InternalCache viewerCache, FileStorageProvider fileStorageProvider, FileTypeResolver fileTypeResolver,
+                                           PageFormatter pageFormatter) {
 		super(viewerConfig, licenser, viewerCache, fileStorageProvider, fileTypeResolver, pageFormatter);
 		_viewerConfig = viewerConfig;
 	}

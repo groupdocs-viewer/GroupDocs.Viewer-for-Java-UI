@@ -1,10 +1,11 @@
 package com.groupdocs.viewerui.ui.api;
 
-public class FilePathFileNameResolver implements IFileNameResolver {
+import java.nio.file.Paths;
 
-	@Override
-	public String resolveFileName(String filePath) {
-		throw new IllegalStateException("Not implemented");
-	}
+public class FilePathFileNameResolver implements FileNameResolver {
 
+    @Override
+    public String resolveFileName(String filePath) {
+        return Paths.get(filePath).getFileName().toString();
+    }
 }

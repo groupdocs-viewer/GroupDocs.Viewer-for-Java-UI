@@ -9,12 +9,12 @@ import com.groupdocs.viewer.results.PdfViewInfo;
 import com.groupdocs.viewer.results.ViewInfo;
 import com.groupdocs.viewerui.ui.configuration.ViewerConfig;
 import com.groupdocs.viewerui.ui.configuration.InternalCacheOptions;
-import com.groupdocs.viewerui.ui.api.IFileTypeResolver;
-import com.groupdocs.viewerui.ui.api.internalcaching.IInternalCache;
-import com.groupdocs.viewerui.ui.api.licensing.IViewerLicenser;
+import com.groupdocs.viewerui.ui.api.FileTypeResolver;
+import com.groupdocs.viewerui.ui.api.internalcaching.InternalCache;
+import com.groupdocs.viewerui.ui.api.licensing.ViewerLicenser;
 import com.groupdocs.viewerui.ui.core.FileStorageProvider;
 import com.groupdocs.viewerui.ui.core.IFileStorage;
-import com.groupdocs.viewerui.ui.core.IPageFormatter;
+import com.groupdocs.viewerui.ui.core.PageFormatter;
 import com.groupdocs.viewerui.ui.core.IViewer;
 import com.groupdocs.viewerui.ui.core.entities.DocumentInfo;
 import com.groupdocs.viewerui.ui.core.entities.FileCredentials;
@@ -32,22 +32,22 @@ public abstract class BaseViewer implements IViewer {
 
 	private final ViewerConfig _viewerConfig;
 
-	private final IViewerLicenser _viewerLicenser;
+	private final ViewerLicenser _viewerLicenser;
 
-	private final IInternalCache _viewerCache;
+	private final InternalCache _viewerCache;
 
 	private final InternalCacheOptions _internalCacheOptions;
 
 	private final FileStorageProvider _fileStorageProvider;
 
-	private final IFileTypeResolver _fileTypeResolver;
+	private final FileTypeResolver _fileTypeResolver;
 
-	private final IPageFormatter _pageFormatter;
+	private final PageFormatter _pageFormatter;
 
 	private Viewer _viewer;
 
-	protected BaseViewer(ViewerConfig viewerConfig, IViewerLicenser viewerLicenser, IInternalCache viewerCache,
-						 FileStorageProvider fileStorageProvider, IFileTypeResolver fileTypeResolver, IPageFormatter pageFormatter) {
+	protected BaseViewer(ViewerConfig viewerConfig, ViewerLicenser viewerLicenser, InternalCache viewerCache,
+						 FileStorageProvider fileStorageProvider, FileTypeResolver fileTypeResolver, PageFormatter pageFormatter) {
 		_viewerConfig = viewerConfig;
 		_viewerLicenser = viewerLicenser;
 		_viewerCache = viewerCache;
@@ -119,7 +119,7 @@ public abstract class BaseViewer implements IViewer {
 		try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
 			PdfViewOptions viewOptions = createPdfViewOptions(byteArrayOutputStream);
 
-			Viewer viewer = initViewer(fileCredentials);
+			final Viewer viewer = initViewer(fileCredentials);
 			viewer.view(viewOptions);
 
 			return byteArrayOutputStream.toByteArray();

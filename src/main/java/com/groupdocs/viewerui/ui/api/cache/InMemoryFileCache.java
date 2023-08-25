@@ -2,60 +2,36 @@ package com.groupdocs.viewerui.ui.api.cache;
 
 import com.groupdocs.viewerui.ui.api.cache.config.CacheConfig;
 import com.groupdocs.viewerui.ui.core.IFileCache;
-
-import java.util.HashMap;
-import java.util.Map;
+import com.groupdocs.viewerui.ui.core.cache.MemoryCache;
+import com.groupdocs.viewerui.ui.core.cache.MemoryCacheEntryOptions;
 
 public class InMemoryFileCache implements IFileCache {
-    private final Map<String, CacheEntry<Object>> _cache;
+    private final MemoryCache _cache;
     private final CacheConfig _config;
 
-    public InMemoryFileCache(CacheConfig config) {
-        _cache = new HashMap<>();
+    public InMemoryFileCache(MemoryCache memoryCache, CacheConfig config) {
+        _cache = memoryCache;
         _config = config;
     }
 
-    public <TEntry> TEntry get(String cacheKey, String filePath) {
+    public <T> T get(String cacheKey, String filePath) {
         String key = filePath + "_" + cacheKey;
-        if (_cache.containsKey(key)) {
-            final CacheEntry<Object> objectCacheEntry = _cache.get(key);
-            if (objectCacheEntry == null) {
-                return null;
-            }
-            long cacheEntryExpirationTimeout = _config.getCacheEntryExpirationTimeoutMinutes() * 60 * 1000L;
-            if (objectCacheEntry.creationTime + cacheEntryExpirationTimeout < System.currentTimeMillis()) {
-                _cache.remove(key);
-                return null;
-            } else {
-                return (TEntry) objectCacheEntry.value;
-            }
+        final Object value = _cache.get(key);
+        if (value != null) {
+            return (T) value;
         }
-
         return null;
     }
 
     public void set(String cacheKey, String filePath, Object entry) {
-//        MemoryCacheEntryOptions entryOptions;
+        MemoryCacheEntryOptions entryOptions = new MemoryCacheEntryOptions();
 
-        if (_config.getCacheEntryExpirationTimeoutMinutes() > 0) {
-            throw new IllegalStateException("Not implemented");
-//            var cts = GetOrCreateCancellationTokenSource(cacheKey, filePath);
-//            entryOptions = CreateCacheEntryOptions(cts);
-        } else {
-//            entryOptions = createCacheEntryOptions();
+        final int cacheEntryExpirationTimeoutMinutes = _config.getCacheEntryExpirationTimeoutMinutes();
+        if (cacheEntryExpirationTimeoutMinutes > 0) {
+            entryOptions.setSlidingExpiration(cacheEntryExpirationTimeoutMinutes * 60 * 1000L);
         }
 
         String key = filePath + "_" + cacheKey;
-        _cache.put(key, new CacheEntry<>(entry)/*, entryOptions*/);
-    }
-
-    static class CacheEntry<T> {
-        public final long creationTime;
-        public final T value;
-
-        public CacheEntry(T value) {
-            this.creationTime = System.currentTimeMillis();
-            this.value = value;
-        }
+        _cache.put(key, entry, entryOptions);
     }
 }

@@ -8,7 +8,7 @@ public interface Constants {
 
 	String DOWNLOAD_DOCUMENT_ACTION_NAME = "DownloadDocument";
 
-	String LOAD_DOCUMENT_PAGE_RESOURCE_ACTION_NAME = "LoadDocumentPageResource";
+	String LOAD_DOCUMENT_PAGE_RESOURCE_ACTION_NAME = "loadDocumentPageResource";
 
 	String UPLOAD_DOCUMENT_ACTION_NAME = "UploadDocument";
 

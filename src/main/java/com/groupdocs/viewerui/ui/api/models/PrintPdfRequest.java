@@ -1,17 +1,21 @@
 package com.groupdocs.viewerui.ui.api.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class PrintPdfRequest {
 
+	@JsonProperty("guid")
 	private String _guid;
 
+	@JsonProperty("fileType")
 	private String _fileType;
 
+	@JsonProperty("password")
 	private String _password;
 
 	/**
 	 * Unique file ID.
 	 */
-	// [JsonPropertyName("guid")]
 	public String getGuid() {
 		return _guid;
 	}
@@ -23,7 +27,6 @@ public class PrintPdfRequest {
 	/**
 	 * File type e.g. "docx".
 	 */
-	// [JsonPropertyName("fileType")]
 	public String getFileType() {
 		return _fileType;
 	}
@@ -35,7 +38,6 @@ public class PrintPdfRequest {
 	/**
 	 * Password to open the document.
 	 */
-	// [JsonPropertyName("password")]
 	public String getPassword() {
 		return _password;
 	}

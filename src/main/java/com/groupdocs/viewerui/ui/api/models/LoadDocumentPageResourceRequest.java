@@ -1,21 +1,27 @@
 package com.groupdocs.viewerui.ui.api.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class LoadDocumentPageResourceRequest {
 
+	@JsonProperty("guid")
 	private String _guid;
 
+	@JsonProperty("fileType")
 	private String _fileType;
 
+	@JsonProperty("password")
 	private String _password;
 
+	@JsonProperty("pageNumber")
 	private int _pageNumber;
 
+	@JsonProperty("resourceName")
 	private String _resourceName;
 
 	/**
 	 * File unique ID.
 	 */
-	// [JsonPropertyName("guid")]
 	public String getGuid() {
 		return _guid;
 	}

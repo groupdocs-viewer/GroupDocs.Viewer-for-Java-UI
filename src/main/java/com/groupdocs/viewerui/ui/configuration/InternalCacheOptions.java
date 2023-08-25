@@ -16,7 +16,7 @@ public class InternalCacheOptions {
 
 	private int _cacheEntryExpirationTimeoutMinutes;
 
-	public boolean getIsCacheEnabled() {
+	public boolean isCacheEnabled() {
 		return _isCacheEnabled;
 	}
 
@@ -25,7 +25,7 @@ public class InternalCacheOptions {
 	}
 
 	public boolean isCacheDisabled() {
-		return !getIsCacheEnabled();
+		return !isCacheEnabled();
 	}
 
 	public int getCacheEntryExpirationTimeoutMinutes() {

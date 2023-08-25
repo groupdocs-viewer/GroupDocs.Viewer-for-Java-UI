@@ -2,42 +2,35 @@ package com.groupdocs.viewerui.ui.api.internalcaching;
 
 import com.groupdocs.viewer.Viewer;
 import com.groupdocs.viewerui.ui.configuration.InternalCacheOptions;
+import com.groupdocs.viewerui.ui.core.cache.MemoryCache;
+import com.groupdocs.viewerui.ui.core.cache.MemoryCacheEntryOptions;
 import com.groupdocs.viewerui.ui.core.entities.FileCredentials;
 
-import java.util.HashMap;
-import java.util.Map;
+public class InMemoryInternalCache implements InternalCache {
 
-public class InMemoryInternalCache implements IInternalCache {
-
-    private final Map<String, CacheEntry> _cache;
+    private final MemoryCache _cache;
     private final InternalCacheOptions _options;
 
-    public InMemoryInternalCache(InternalCacheOptions options) {
-        _cache = new HashMap<>();
+    public InMemoryInternalCache(MemoryCache memoryCache, InternalCacheOptions options) {
+        _cache = memoryCache;
         _options = options;
     }
 
     public Viewer get(FileCredentials fileCredentials) {
         final String key = setKey(fileCredentials);
-        final CacheEntry cacheEntry = _cache.get(key);
-        if (cacheEntry == null) {
+        final Viewer viewer = _cache.get(key);
+        if (viewer == null) {
             return null;
         }
-        final InternalCacheOptions options = getOptions();
-        long cacheEntryExpirationTimeout = options.getCacheEntryExpirationTimeoutMinutes() * 60 * 1000L;
-        if (cacheEntry.creationTime + cacheEntryExpirationTimeout < System.currentTimeMillis()) {
-            _cache.remove(key);
-            return null;
-        } else {
-            return cacheEntry.value;
-        }
+        return viewer;
     }
 
     public void set(FileCredentials fileCredentials, Viewer entry) {
         String entryKey = setKey(fileCredentials);
-        final CacheEntry oldEntry = _cache.put(entryKey, new CacheEntry(entry));
-        if (oldEntry != null) {
-            oldEntry.value.close();
+        final Viewer viewer = _cache.get(entryKey);
+        if (viewer == null) {
+            MemoryCacheEntryOptions entryOptions = createCacheEntryOptions();
+            _cache.put(entryKey, entry, entryOptions);
         }
     }
 
@@ -45,17 +38,24 @@ public class InMemoryInternalCache implements IInternalCache {
         return fileCredentials.getFilePath() + "_" + fileCredentials.getPassword() + "__VC";
     }
 
+    private MemoryCacheEntryOptions createCacheEntryOptions() {
+        MemoryCacheEntryOptions entryOptions = new MemoryCacheEntryOptions();
+
+        if (_options.getCacheEntryExpirationTimeoutMinutes() > 0) {
+            entryOptions.setSlidingExpiration(_options.getCacheEntryExpirationTimeoutMinutes() * 60 * 1000L);
+        }
+
+        entryOptions.registerPostEvictionCallback(viewer -> {
+            if (viewer instanceof Viewer) {
+                ((Viewer) viewer).close();
+            }
+        });
+
+        return entryOptions;
+    }
+
     public InternalCacheOptions getOptions() {
         return _options;
     }
 
-    static class CacheEntry {
-        public final long creationTime;
-        public final Viewer value;
-
-        public CacheEntry(Viewer value) {
-            this.creationTime = System.currentTimeMillis();
-            this.value = value;
-        }
-    }
 }

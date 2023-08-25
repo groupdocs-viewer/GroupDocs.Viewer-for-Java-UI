@@ -1,7 +1,6 @@
 package com.groupdocs.viewerui.ui.core.entities;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 
 public class HtmlPage extends Page {
 
@@ -13,7 +12,7 @@ public class HtmlPage extends Page {
 
 	@Override
 	public String getContent() {
-		return Base64.getEncoder().encodeToString(getData());
+		return new String(getData(), StandardCharsets.UTF_8);
 	}
 
 	@Override
