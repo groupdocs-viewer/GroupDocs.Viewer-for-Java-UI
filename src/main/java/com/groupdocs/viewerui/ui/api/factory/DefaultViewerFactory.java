@@ -2,7 +2,7 @@ package com.groupdocs.viewerui.ui.api.factory;
 
 import com.groupdocs.viewerui.ui.api.FileTypeResolver;
 import com.groupdocs.viewerui.ui.api.FileTypeResolverFactory;
-import com.groupdocs.viewerui.ui.api.cache.InMemoryFileCache;
+import com.groupdocs.viewerui.ui.api.cache.memory.InMemoryFileCache;
 import com.groupdocs.viewerui.ui.api.cache.config.CacheConfig;
 import com.groupdocs.viewerui.ui.api.internalcaching.InternalCache;
 import com.groupdocs.viewerui.ui.api.internalcaching.InternalCacheFactory;
@@ -18,8 +18,8 @@ import com.groupdocs.viewerui.ui.configuration.ViewerConfig;
 import com.groupdocs.viewerui.ui.core.FileStorageProvider;
 import com.groupdocs.viewerui.ui.core.IViewer;
 import com.groupdocs.viewerui.ui.core.PageFormatter;
-import com.groupdocs.viewerui.ui.core.cache.MemoryCache;
-import com.groupdocs.viewerui.ui.core.cache.MemoryCacheFactory;
+import com.groupdocs.viewerui.ui.core.cache.internal.MemoryCache;
+import com.groupdocs.viewerui.ui.core.cache.internal.MemoryCacheFactory;
 import com.groupdocs.viewerui.ui.core.caching.CachingViewer;
 import com.groupdocs.viewerui.ui.core.pageformatting.PageFormatterFactory;
 

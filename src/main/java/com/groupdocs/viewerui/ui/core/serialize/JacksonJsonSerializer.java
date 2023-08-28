@@ -7,11 +7,15 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleAbstractTypeResolver;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.groupdocs.viewerui.exception.ViewerUiException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 
 public class JacksonJsonSerializer implements ISerializer {
+	private static final Logger LOGGER = LoggerFactory.getLogger(JacksonJsonSerializer.class);
 
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -24,7 +28,6 @@ public class JacksonJsonSerializer implements ISerializer {
 		SimpleModule module = new SimpleModule(Version.unknownVersion());
 
 		SimpleAbstractTypeResolver resolver = new SimpleAbstractTypeResolver();
-		// resolver.addMapping(ArchiveViewInfo.class, ArchiveViewInfoModel.class);
 
 		module.setAbstractTypes(resolver);
 
@@ -37,8 +40,8 @@ public class JacksonJsonSerializer implements ISerializer {
 			MAPPER.writerWithDefaultPrettyPrinter().writeValue(outputStream, value);
 		}
 		catch (Exception e) {
-			e.printStackTrace(); // TODO: Add logging
-			throw new RuntimeException(e);
+			LOGGER.error("Exception throws while serializing object: value={}", value, e);
+			throw new ViewerUiException(e);
 		}
 	}
 
@@ -48,8 +51,8 @@ public class JacksonJsonSerializer implements ISerializer {
 			return MAPPER.readValue(inputStream, clazz);
 		}
 		catch (Exception e) {
-			e.printStackTrace(); // TODO: Add logging
-			throw new RuntimeException(e);
+			LOGGER.error("Exception throws while deserializing object: clazz={}", clazz, e);
+			throw new ViewerUiException(e);
 		}
 	}
 

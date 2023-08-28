@@ -80,4 +80,16 @@ public class ViewerConfig {
 		return _internalCacheOptions;
 	}
 
+	@Override
+	public String toString() {
+		return "ViewerConfig {" +
+			   " internalCacheOptions=" + _internalCacheOptions +
+			   ", licensePath='" + _licensePath + '\'' +
+			   ", viewerType=" + _viewerType +
+			   ", htmlViewOptions=" + _htmlViewOptions +
+			   ", pngViewOptions=" + _pngViewOptions +
+			   ", jpgViewOptions=" + _jpgViewOptions +
+			   ", pdfViewOptions=" + _pdfViewOptions +
+			   " }";
+	}
 }

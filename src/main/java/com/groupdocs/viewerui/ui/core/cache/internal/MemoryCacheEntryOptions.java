@@ -1,4 +1,4 @@
-package com.groupdocs.viewerui.ui.core.cache;
+package com.groupdocs.viewerui.ui.core.cache.internal;
 
 import java.util.function.Consumer;
 

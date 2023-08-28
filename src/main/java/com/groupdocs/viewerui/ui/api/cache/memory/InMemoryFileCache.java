@@ -1,9 +1,9 @@
-package com.groupdocs.viewerui.ui.api.cache;
+package com.groupdocs.viewerui.ui.api.cache.memory;
 
+import com.groupdocs.viewerui.ui.api.cache.IFileCache;
 import com.groupdocs.viewerui.ui.api.cache.config.CacheConfig;
-import com.groupdocs.viewerui.ui.core.IFileCache;
-import com.groupdocs.viewerui.ui.core.cache.MemoryCache;
-import com.groupdocs.viewerui.ui.core.cache.MemoryCacheEntryOptions;
+import com.groupdocs.viewerui.ui.core.cache.internal.MemoryCache;
+import com.groupdocs.viewerui.ui.core.cache.internal.MemoryCacheEntryOptions;
 
 public class InMemoryFileCache implements IFileCache {
     private final MemoryCache _cache;

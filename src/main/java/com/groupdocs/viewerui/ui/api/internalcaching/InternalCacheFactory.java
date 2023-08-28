@@ -1,7 +1,7 @@
 package com.groupdocs.viewerui.ui.api.internalcaching;
 
 import com.groupdocs.viewerui.ui.configuration.InternalCacheOptions;
-import com.groupdocs.viewerui.ui.core.cache.MemoryCache;
+import com.groupdocs.viewerui.ui.core.cache.internal.MemoryCache;
 
 public class InternalCacheFactory {
     private static InternalCache _internalCache;

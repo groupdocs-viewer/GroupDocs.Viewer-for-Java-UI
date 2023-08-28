@@ -1,4 +1,4 @@
-package com.groupdocs.viewerui.ui.core.cache;
+package com.groupdocs.viewerui.ui.core.cache.internal;
 
 public class MemoryCacheOptions {
     private long _expirationScanFrequency = 60 * 1000L;

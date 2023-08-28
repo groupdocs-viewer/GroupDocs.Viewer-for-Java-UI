@@ -14,12 +14,15 @@ import com.groupdocs.viewerui.ui.core.entities.FileCredentials;
 import com.groupdocs.viewerui.ui.core.entities.HtmlPage;
 import com.groupdocs.viewerui.ui.core.entities.Page;
 import com.groupdocs.viewerui.ui.core.extensions.CopyExtensions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
 public class HtmlWithEmbeddedResourcesViewer extends BaseViewer {
+	private static final Logger LOGGER = LoggerFactory.getLogger(HtmlWithEmbeddedResourcesViewer.class);
 
 	private ViewerConfig _viewerConfig;
 
@@ -64,8 +67,8 @@ public class HtmlWithEmbeddedResourcesViewer extends BaseViewer {
 			return page;
 		}
 		catch (IOException e) {
-			e.printStackTrace(); // TODO: Add logging
-			throw new RuntimeException(e);
+			LOGGER.error("Exception throws while rendering html page with embedded resources: filePath={}, pageNumber={}", filePath, pageNumber, e);
+			throw new ViewerUiException(e);
 		}
 	}
 

@@ -1,7 +1,10 @@
 package com.groupdocs.viewerui.ui.api.licensing;
 
 import com.groupdocs.viewer.License;
+import com.groupdocs.viewerui.exception.ViewerUiException;
 import com.groupdocs.viewerui.ui.configuration.ViewerConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -10,6 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class DefaultViewerLicenser implements ViewerLicenser {
+	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultViewerLicenser.class);
 
 	private final ViewerConfig _viewerConfig;
 
@@ -23,24 +27,17 @@ public class DefaultViewerLicenser implements ViewerLicenser {
 
 	@Override
 	public void setLicense() {
-		boolean isUseEvaluationLic = true;
 
 		if (_licenseSet) {
 			return;
 		}
 
-		StringBuilder sbErrors = new StringBuilder();
-
 		final String configLicensePath = _viewerConfig.getLicensePath();
 		if (configLicensePath != null && !configLicensePath.isEmpty()) {
-			isUseEvaluationLic = false;
 			try {
 				setLicense(configLicensePath);
-			}
-			catch (Exception ex) {
-				sbErrors.append("Check config license path error \n");
-				sbErrors.append(ex.getMessage());
-				sbErrors.append("\n");
+			} catch (Exception e) {
+				LOGGER.error("Exception throws while setting license via file path: Check config license path", e);
 			}
 
 			if (_licenseSet) {
@@ -52,12 +49,9 @@ public class DefaultViewerLicenser implements ViewerLicenser {
 		if (licensePath != null && !licensePath.isEmpty()) {
 			try {
 				setLicense(licensePath);
-			}
-			catch (Exception ex) {
-				sbErrors.append("Check environment variable "
-						+ LicenseKeys.GROUPDOCSVIEWERUI_LIC_PATH_ENVIRONMENT_VARIABLE_KEY + " error \n");
-				sbErrors.append(ex.getMessage());
-				sbErrors.append("\n");
+			} catch (Exception e) {
+				LOGGER.error("Exception throws while setting license via file path: Check environment variable " +
+							 LicenseKeys.GROUPDOCSVIEWERUI_LIC_PATH_ENVIRONMENT_VARIABLE_KEY, e);
 			}
 
 			if (_licenseSet) {
@@ -66,7 +60,6 @@ public class DefaultViewerLicenser implements ViewerLicenser {
 		}
 
 		List<String> licFileNames = Arrays.asList(
-
 				LicenseKeys.GROUPDOCSVIEWERUI_LIC_FILE_DEFAULT_NAME,
 				LicenseKeys.GROUPDOCSVIEWERUI_TEMPORARY_LIC_FILE_DEFAULT_NAME);
 
@@ -74,23 +67,15 @@ public class DefaultViewerLicenser implements ViewerLicenser {
 			String licPath = Paths.get(".").resolve(licFileName).toString();
 			try {
 				setLicense(licPath);
-			}
-			catch (Exception ex) {
-				sbErrors.append("Check " + licPath + " error \n");
-				sbErrors.append(ex.getMessage());
-				sbErrors.append("\n");
+			} catch (Exception e) {
+				LOGGER.error("Exception throws while setting license via file path: Check default license files names - '{}' or '{}'",
+						LicenseKeys.GROUPDOCSVIEWERUI_LIC_FILE_DEFAULT_NAME, LicenseKeys.GROUPDOCSVIEWERUI_TEMPORARY_LIC_FILE_DEFAULT_NAME, e);
 			}
 
 			if (_licenseSet) {
 				return;
 			}
 		}
-		// #if DEBUG
-		// if (!isUseEvaluationLic)
-		// {
-		// throw new FileNotFoundException(sbErrors.ToString());
-		// }
-		// #endif
 	}
 
 	private void setLicense(String licensePath) {
@@ -101,8 +86,7 @@ public class DefaultViewerLicenser implements ViewerLicenser {
 					try {
 						license.setLicense(new URL(licensePath));
 					} catch (MalformedURLException e) {
-						e.printStackTrace(); // TODO: Add logging
-						throw new RuntimeException(e);
+						LOGGER.error("Exception throws while setting license from URL", e);
 					}
 				} else {
 					license.setLicense(licensePath);
@@ -112,5 +96,4 @@ public class DefaultViewerLicenser implements ViewerLicenser {
 			}
 		}
 	}
-
 }

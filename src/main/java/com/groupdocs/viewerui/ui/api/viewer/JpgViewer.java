@@ -14,12 +14,15 @@ import com.groupdocs.viewerui.ui.core.entities.FileCredentials;
 import com.groupdocs.viewerui.ui.core.entities.JpgPage;
 import com.groupdocs.viewerui.ui.core.entities.Page;
 import com.groupdocs.viewerui.ui.core.extensions.CopyExtensions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
 public class JpgViewer extends BaseViewer {
+	private static final Logger LOGGER = LoggerFactory.getLogger(JpgViewer.class);
 
 	private final ViewerConfig _viewerConfig;
 
@@ -57,8 +60,8 @@ public class JpgViewer extends BaseViewer {
 			return page;
 		}
 		catch (IOException e) {
-			e.printStackTrace(); // TODO: Add logging
-			throw new RuntimeException(e);
+			LOGGER.error("Exception throws while rendering jpg page: filePath={}", filePath, e);
+			throw new ViewerUiException(e);
 		}
 	}
 

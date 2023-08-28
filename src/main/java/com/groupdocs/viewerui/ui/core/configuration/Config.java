@@ -77,7 +77,6 @@ public class Config {
 			"zh-hant", // zh-Hant" - 中文(繁體)
 	};
 
-	// TODO: Not implemented
 	private boolean _isRotate = false;
 
 	private boolean _isSaveRotateState = false;
@@ -398,4 +397,30 @@ public class Config {
 		return this;
 	}
 
+	@Override
+	public String toString() {
+		return "Config {" +
+			   " defaultDocument='" + _defaultDocument + '\'' +
+			   ", preloadPageCount=" + _preloadPageCount +
+			   ", isPageSelector=" + _isPageSelector +
+			   ", isThumbnails=" + _isThumbnails +
+			   ", isZoom=" + _isZoom +
+			   ", isSearch=" + _isSearch +
+			   ", isShowToolBar=" + _isShowToolBar +
+			   ", isEnableRightClick=" + _isEnableRightClick +
+			   ", baseUrl='" + _baseUrl + '\'' +
+			   ", isDownload=" + _isDownload +
+			   ", isUpload=" + _isUpload +
+			   ", isRewrite=" + _isRewrite +
+			   ", isPrint=" + _isPrint +
+			   ", isBrowse=" + _isBrowse +
+			   ", isPrintAllowed=" + _isPrintAllowed +
+			   ", isHtmlMode=" + _isHtmlMode +
+			   ", isShowLanguageMenu=" + _isShowLanguageMenu +
+			   ", defaultLanguage='" + _defaultLanguage + '\'' +
+			   ", supportedLanguages=" + Arrays.toString(_supportedLanguages) +
+			   ", isRotate=" + _isRotate +
+			   ", isSaveRotateState=" + _isSaveRotateState +
+			   " }";
+	}
 }

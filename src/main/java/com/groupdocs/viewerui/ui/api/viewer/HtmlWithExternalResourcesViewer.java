@@ -6,6 +6,7 @@ import com.groupdocs.viewer.interfaces.ResourceStreamFactory;
 import com.groupdocs.viewer.options.HtmlViewOptions;
 import com.groupdocs.viewer.options.ViewInfoOptions;
 import com.groupdocs.viewer.results.Resource;
+import com.groupdocs.viewerui.exception.ViewerUiException;
 import com.groupdocs.viewerui.ui.api.Constants;
 import com.groupdocs.viewerui.ui.api.FileTypeResolver;
 import com.groupdocs.viewerui.ui.api.internalcaching.InternalCache;
@@ -19,6 +20,8 @@ import com.groupdocs.viewerui.ui.core.entities.HtmlPage;
 import com.groupdocs.viewerui.ui.core.entities.Page;
 import com.groupdocs.viewerui.ui.core.entities.PageResource;
 import com.groupdocs.viewerui.ui.core.extensions.CopyExtensions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -29,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HtmlWithExternalResourcesViewer extends BaseViewer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(HtmlWithExternalResourcesViewer.class);
 
     private final ViewerConfig _viewerConfig;
 
@@ -69,8 +73,8 @@ public class HtmlWithExternalResourcesViewer extends BaseViewer {
 
             return page;
         } catch (Exception e) {
-            e.printStackTrace(); // TODO: Add logging
-            throw new RuntimeException(e);
+            LOGGER.error("Exception throws while rendering html page with external resources: filePath={}, pageNumber={}", filePath, pageNumber, e);
+            throw new ViewerUiException(e);
         }
     }
 
@@ -117,8 +121,7 @@ public class HtmlWithExternalResourcesViewer extends BaseViewer {
             try {
                 pageStream.close();
             } catch (IOException e) {
-                e.printStackTrace(); // TODO: Add logging
-                throw new RuntimeException(e);
+                LOGGER.error("Exception throws while closing page stream: pageNumber={}", pageNumber, e);
             }
         }
 
@@ -131,12 +134,12 @@ public class HtmlWithExternalResourcesViewer extends BaseViewer {
         }
 
         public void closeResourceStream(int pageNumber, Resource resource, OutputStream resourceStream) {
-            _pageContents.flushResourceStream(resource.getFileName(), resourceStream);
+            final String fileName = resource.getFileName();
+            _pageContents.flushResourceStream(fileName, resourceStream);
             try {
                 resourceStream.close();
             } catch (IOException e) {
-                e.printStackTrace(); // TODO: Add logging
-                throw new RuntimeException(e);
+                LOGGER.error("Exception throws while closing resource stream: fileName={}", fileName, e);
             }
         }
     }
@@ -177,7 +180,8 @@ public class HtmlWithExternalResourcesViewer extends BaseViewer {
             if (resourceStream instanceof ByteArrayOutputStream) {
                 _resources.put(fileName, ((ByteArrayOutputStream) resourceStream).toByteArray());
             } else {
-                // TODO: log warning
+                LOGGER.error("Unexpected type of resource stream: fileName={}", fileName);
+                throw new ViewerUiException("Unexpected type of resource stream!");
             }
         }
 
@@ -185,7 +189,8 @@ public class HtmlWithExternalResourcesViewer extends BaseViewer {
             if (pageStream instanceof ByteArrayOutputStream) {
                 _pageData = ((ByteArrayOutputStream) pageStream).toByteArray();
             } else {
-                // TODO: log warning
+                LOGGER.error("Unexpected type of page stream: pageStream={}", pageStream);
+                throw new ViewerUiException("Unexpected type of page stream!");
             }
         }
     }

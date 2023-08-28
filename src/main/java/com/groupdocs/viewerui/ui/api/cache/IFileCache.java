@@ -1,4 +1,4 @@
-package com.groupdocs.viewerui.ui.core;
+package com.groupdocs.viewerui.ui.api.cache;
 
 public interface IFileCache {
     <TEntry> TEntry get(String cacheKey, String filePath);

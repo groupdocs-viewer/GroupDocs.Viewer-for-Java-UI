@@ -1,6 +1,6 @@
 package com.groupdocs.viewerui.ui.core.filecaching;
 
-import com.groupdocs.viewerui.ui.core.IFileCache;
+import com.groupdocs.viewerui.ui.api.cache.IFileCache;
 
 public class NoopFileCache implements IFileCache {
 

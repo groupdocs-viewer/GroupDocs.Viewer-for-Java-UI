@@ -7,6 +7,8 @@ import com.groupdocs.viewer.options.PdfViewOptions;
 import com.groupdocs.viewer.options.ViewInfoOptions;
 import com.groupdocs.viewer.results.PdfViewInfo;
 import com.groupdocs.viewer.results.ViewInfo;
+import com.groupdocs.viewerui.exception.ViewerUiException;
+import com.groupdocs.viewerui.mapper.CommonViewerEndpointHandler;
 import com.groupdocs.viewerui.ui.configuration.ViewerConfig;
 import com.groupdocs.viewerui.ui.configuration.InternalCacheOptions;
 import com.groupdocs.viewerui.ui.api.FileTypeResolver;
@@ -20,6 +22,8 @@ import com.groupdocs.viewerui.ui.core.entities.DocumentInfo;
 import com.groupdocs.viewerui.ui.core.entities.FileCredentials;
 import com.groupdocs.viewerui.ui.core.entities.Page;
 import com.groupdocs.viewerui.ui.core.entities.PageInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -29,6 +33,7 @@ import java.util.stream.Collectors;
 import static com.groupdocs.viewerui.ui.core.extensions.CopyExtensions.copyPdfViewOptions;
 
 public abstract class BaseViewer implements IViewer {
+	private static final Logger LOGGER = LoggerFactory.getLogger(BaseViewer.class);
 
 	private final ViewerConfig _viewerConfig;
 
@@ -125,8 +130,8 @@ public abstract class BaseViewer implements IViewer {
 			return byteArrayOutputStream.toByteArray();
 		}
 		catch (IOException e) {
-			e.printStackTrace(); // TODO: Add logging
-			throw new RuntimeException(e);
+			LOGGER.error("Exception throws while getting pdf: filePath={}", fileCredentials.getFilePath(), e);
+			throw new ViewerUiException(e);
 		}
 	}
 
@@ -171,13 +176,12 @@ public abstract class BaseViewer implements IViewer {
 	private Viewer createViewer(FileCredentials fileCredentials) {
 		try (InputStream fileStream = createFileStream(fileCredentials.getFilePath())) {
 			LoadOptions loadOptions = createLoadOptions(fileCredentials);
-			Viewer viewer = new Viewer(fileStream, loadOptions);
 
-			return viewer;
+            return new Viewer(fileStream, loadOptions);
 		}
 		catch (IOException e) {
-			e.printStackTrace(); // TODO: Add logging
-			throw new RuntimeException(e);
+			LOGGER.error("Exception throws while creating a viewer: filePath={}", fileCredentials.getFilePath(), e);
+			throw new ViewerUiException(e);
 		}
 	}
 

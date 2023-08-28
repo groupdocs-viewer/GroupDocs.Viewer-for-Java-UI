@@ -24,6 +24,8 @@ import com.groupdocs.viewerui.ui.core.extensions.UrlExtensions;
 import com.groupdocs.viewerui.ui.core.serialize.ISerializer;
 import com.groupdocs.viewerui.ui.core.serialize.JacksonJsonSerializer;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,6 +40,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class CommonViewerEndpointHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommonViewerEndpointHandler.class);
     public static final String CONTENT_TYPE = "Content-Type";
     private UiOptions _uiOptions = new UiOptions();
 
@@ -68,17 +71,22 @@ public class CommonViewerEndpointHandler {
         final Config config = commonViewerEndpointHandler.getConfig();
         configConsumer.accept(viewerConfig, config);
         // TODO: Some checks
+        LOGGER.info("GroupDocs Viewer has been set up.");
+        LOGGER.debug("Viewer config: {}, \nConfig: {}", viewerConfig, config);
         return commonViewerEndpointHandler;
     }
 
     public CommonViewerEndpointHandler setupGroupDocsViewerUI(Consumer<UiOptions> optionsConsumer) {
-        optionsConsumer.accept(this._uiOptions);
+        final UiOptions uiOptions = getUiOptions();
+        optionsConsumer.accept(uiOptions);
 
-        final String uiPath = this._uiOptions.getUiPath();
+        final String uiPath = uiOptions.getUiPath();
         if (uiPath == null || !uiPath.startsWith("/")) {
             throw new IllegalArgumentException(
                     "The value for customized path can't be null and need to start with / character.");
         }
+        LOGGER.info("GroupDocs Viewer UI has been set up.");
+        LOGGER.debug("Ui options: {}", uiOptions);
         return this;
     }
 
@@ -88,25 +96,36 @@ public class CommonViewerEndpointHandler {
     }
 
     public CommonViewerEndpointHandler setupGroupDocsViewerApi(Consumer<ApiOptions> optionsConsumer, ViewerFactory viewerFactory, ViewerControllerFactory viewerControllerFactory) {
-        optionsConsumer.accept(this._apiOptions);
+        final ApiOptions apiOptions = getApiOptions();
+        optionsConsumer.accept(apiOptions);
 
-        final String apiEndpoint = this._apiOptions.getApiEndpoint();
+        final String apiEndpoint = apiOptions.getApiEndpoint();
         if (apiEndpoint == null || apiEndpoint.isEmpty()) {
             throw new IllegalArgumentException("The value can't be null or empty.");
         }
 
-        final String apiPath = this._apiOptions.getApiEndpoint();
+        final String apiPath = apiOptions.getApiEndpoint();
         if (apiPath == null || !apiPath.startsWith("/")) {
-            throw new IllegalArgumentException(
-                    "The value for customized path can't be null and need to start with / character.");
+            throw new IllegalArgumentException("The value for customized path can't be null and need to start with / character.");
         }
         this._viewerFactory = viewerFactory;
         this._viewerControllerFactory = viewerControllerFactory;
+
+        LOGGER.info("GroupDocs Viewer API has been set up.");
+        LOGGER.debug("Api options: {}", apiOptions);
         return this;
     }
 
     public CommonViewerEndpointHandler setupLocalStorage(Path storagePath) {
         _fileStorage = new LocalFileStorage(storagePath);
+        LOGGER.info("GroupDocs Viewer local storage has been set up.");
+//        LOGGER.debug("Api options: {}", apiOptions); // TODO:
+        return this;
+    }
+
+    public CommonViewerEndpointHandler setupLocalCache() {
+        LOGGER.info("GroupDocs Viewer local cache has been set up.");
+//        LOGGER.debug("Api options: {}", apiOptions); // TODO:
         return this;
     }
 
@@ -158,8 +177,8 @@ public class CommonViewerEndpointHandler {
         }
     }
 
-    private int handleUiRequest(String requestUrl, HeaderAdder headerAdder, OutputStream responseStream)
-            throws IOException {
+    private int handleUiRequest(String requestUrl, HeaderAdder headerAdder, OutputStream responseStream) throws IOException {
+
         final UiResource uiResource = prepareUiResourceForResponse(requestUrl);
 
         headerAdder.addHeader(CONTENT_TYPE, uiResource.getContentType());
@@ -218,11 +237,12 @@ public class CommonViewerEndpointHandler {
                         try {
                             responseStream.write((byte[]) documentPageResourceResultValue);
                         } catch (IOException e) {
-                            e.printStackTrace(); // TODO: Add logging
-                            throw new RuntimeException(e);
+                            LOGGER.error("Exception throws while writing document page data to response stream: actionName={} queryString={}", actionName, queryString, e);
+                            throw new ViewerUiException(e);
                         }
                     } else {
-                        // TODO: Log warning
+                        LOGGER.warn("Unexpected type of response object: {}", documentPageResourceResultValue);
+                        return HttpURLConnection.HTTP_INTERNAL_ERROR;
                     }
                 } else {
                     serializer.serialize(documentPageResourceResult.getValue(), responseStream);
@@ -243,11 +263,12 @@ public class CommonViewerEndpointHandler {
                         try {
                             responseStream.write(fileResponse.data);
                         } catch (IOException e) {
-                            e.printStackTrace(); // TODO: Add logging
-                            throw new RuntimeException(e);
+                            LOGGER.error("Exception throws while writing file data to response stream: actionName={} queryString={}", actionName, queryString, e);
+                            throw new ViewerUiException(e);
                         }
                     } else {
-                        // TODO: Log warning
+                        LOGGER.warn("Unexpected type of response object: {}", downloadDocumentResultValue);
+                        return HttpURLConnection.HTTP_INTERNAL_ERROR;
                     }
                 } else {
                     serializer.serialize(downloadDocumentResult.getValue(), responseStream);
@@ -273,11 +294,12 @@ public class CommonViewerEndpointHandler {
                         try {
                             responseStream.write(fileResponse.data);
                         } catch (IOException e) {
-                            e.printStackTrace(); // TODO: Add logging
-                            throw new RuntimeException(e);
+                            LOGGER.error("Exception throws while writing pdf print data to response stream: actionName={} queryString={}", actionName, queryString, e);
+                            throw new ViewerUiException(e);
                         }
                     } else {
-                        // TODO: Log warning
+                        LOGGER.warn("Unexpected type of response object: {}", printPdfResultValue);
+                        return HttpURLConnection.HTTP_INTERNAL_ERROR;
                     }
                 } else {
                     serializer.serialize(printPdfResult.getValue(), responseStream);

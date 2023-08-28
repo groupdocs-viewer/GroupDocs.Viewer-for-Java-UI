@@ -1,6 +1,8 @@
 package com.groupdocs.viewerui.ui.configuration;
 
 import com.groupdocs.viewerui.exception.ViewerUiException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -10,10 +12,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class UiOptions {
+	private static final Logger LOGGER = LoggerFactory.getLogger(UiOptions.class);
 
-	public String _uiPath = "/viewer";
+	private String _uiPath = "/viewer";
 
-	public String _uiConfigEndpoint = "/viewer-config";
+	private String _uiConfigEndpoint = "/viewer-config";
 
 	private Set<String> _customStylesheets = new HashSet<>();
 
@@ -26,8 +29,8 @@ public class UiOptions {
 			}
 		}
 		catch (URISyntaxException e) {
-			// Log error
-			e.printStackTrace();
+			LOGGER.error("Exception throws while parsing resource uri: path={}", path, e);
+			throw new ViewerUiException(e);
 		}
 
 		if (!Files.notExists(stylesheetPath)) {
@@ -63,4 +66,12 @@ public class UiOptions {
 		this._customStylesheets = customStylesheets;
 	}
 
+	@Override
+	public String toString() {
+		return "UiOptions {" +
+			   " uiPath='" + _uiPath + '\'' +
+			   ", uiConfigEndpoint='" + _uiConfigEndpoint + '\'' +
+			   ", customStylesheets=" + _customStylesheets +
+			   " }";
+	}
 }

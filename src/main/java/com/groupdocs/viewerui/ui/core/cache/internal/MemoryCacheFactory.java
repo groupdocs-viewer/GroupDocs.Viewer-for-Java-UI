@@ -1,4 +1,4 @@
-package com.groupdocs.viewerui.ui.core.cache;
+package com.groupdocs.viewerui.ui.core.cache.internal;
 
 public class MemoryCacheFactory {
     private static MemoryCache _memoryCache;

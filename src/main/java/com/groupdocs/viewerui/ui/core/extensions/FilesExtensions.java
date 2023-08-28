@@ -1,5 +1,9 @@
 package com.groupdocs.viewerui.ui.core.extensions;
 
+import com.groupdocs.viewerui.exception.ViewerUiException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -8,12 +12,13 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.stream.Stream;
 
 public class FilesExtensions {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FilesExtensions.class);
     public static Stream<Path> list(Path dir) {
         try {
             return Files.list(dir);
         } catch (IOException e) {
-            e.printStackTrace(); // TODO: Add logging
-            throw new RuntimeException(e);
+            LOGGER.error("Exception throws while listing directory content: dir={}", dir, e);
+            throw new ViewerUiException(e);
         }
     }
 
@@ -21,8 +26,8 @@ public class FilesExtensions {
         try {
             return Files.isHidden(path);
         } catch (IOException e) {
-            e.printStackTrace(); // TODO: Add logging
-            throw new RuntimeException(e);
+            LOGGER.error("Exception throws while Checking is file hidden: path={}", path, e);
+            throw new ViewerUiException(e);
         }
     }
 
@@ -30,8 +35,8 @@ public class FilesExtensions {
         try {
             return Files.readAttributes(path, type, options);
         } catch (IOException e) {
-            e.printStackTrace(); // TODO: Add logging
-            throw new RuntimeException(e);
+            LOGGER.error("Exception throws while reading file attribute: path={}", path, e);
+            throw new ViewerUiException(e);
         }
     }
 
@@ -39,8 +44,8 @@ public class FilesExtensions {
         try {
             return Files.size(path);
         } catch (IOException e) {
-            e.printStackTrace(); // TODO: Add logging
-            throw new RuntimeException(e);
+            LOGGER.error("Exception throws while getting file size: path={}", path, e);
+            throw new ViewerUiException(e);
         }
     }
 }

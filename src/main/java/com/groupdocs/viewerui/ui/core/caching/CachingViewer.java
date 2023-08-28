@@ -1,6 +1,6 @@
 package com.groupdocs.viewerui.ui.core.caching;
 
-import com.groupdocs.viewerui.ui.core.IFileCache;
+import com.groupdocs.viewerui.ui.api.cache.IFileCache;
 import com.groupdocs.viewerui.ui.core.IViewer;
 import com.groupdocs.viewerui.ui.core.entities.DocumentInfo;
 import com.groupdocs.viewerui.ui.core.entities.FileCredentials;

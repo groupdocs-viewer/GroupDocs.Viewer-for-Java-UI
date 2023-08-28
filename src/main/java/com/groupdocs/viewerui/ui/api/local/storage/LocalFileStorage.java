@@ -1,9 +1,12 @@
 package com.groupdocs.viewerui.ui.api.local.storage;
 
+import com.groupdocs.viewerui.exception.ViewerUiException;
 import com.groupdocs.viewerui.ui.core.IFileStorage;
 import com.groupdocs.viewerui.ui.core.entities.FileSystemEntry;
 import com.groupdocs.viewerui.ui.core.extensions.FilesExtensions;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -15,6 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class LocalFileStorage implements IFileStorage {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LocalFileStorage.class);
     private final Path _storagePath;
     private long _waitTimeout = 100L;
 
@@ -61,9 +65,9 @@ public class LocalFileStorage implements IFileStorage {
         Path fullPath = _storagePath.resolve(filePath);
         try (InputStream fs = createInputStream(fullPath)) {
             return IOUtils.toByteArray(fs);
-        } catch (Exception e) {
-            e.printStackTrace(); // TODO: Add logging
-            throw new RuntimeException(e);
+        } catch (IOException | InterruptedException e) {
+            LOGGER.error("Exception throws while reading a file: filePath={}", filePath, e);
+            throw new ViewerUiException(e);
         }
     }
 
@@ -79,8 +83,8 @@ public class LocalFileStorage implements IFileStorage {
             }
             return newFileName;
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace(); // TODO: Add logging
-            throw new RuntimeException(e);
+            LOGGER.error("Exception throws while writing a file: fileName={}", fileName, e);
+            throw new ViewerUiException(e);
         }
     }
 

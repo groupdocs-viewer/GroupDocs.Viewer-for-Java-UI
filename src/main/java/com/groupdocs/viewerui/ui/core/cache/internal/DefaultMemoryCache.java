@@ -1,4 +1,4 @@
-package com.groupdocs.viewerui.ui.core.cache;
+package com.groupdocs.viewerui.ui.core.cache.internal;
 
 import java.util.Iterator;
 import java.util.Map;

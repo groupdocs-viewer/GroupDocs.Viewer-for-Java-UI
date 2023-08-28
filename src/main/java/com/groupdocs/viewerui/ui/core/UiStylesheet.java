@@ -1,6 +1,9 @@
 package com.groupdocs.viewerui.ui.core;
 
+import com.groupdocs.viewerui.exception.ViewerUiException;
 import com.groupdocs.viewerui.ui.configuration.UiOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -8,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class UiStylesheet {
+	private static final Logger LOGGER = LoggerFactory.getLogger(UiStylesheet.class);
 
 	private final static String STYLESHEETS_PATH = "css";
 
@@ -28,8 +32,8 @@ public class UiStylesheet {
 			setResourceRelativePath(STYLESHEETS_PATH + "/" + getFileName());
 		}
 		catch (IOException e) {
-			e.printStackTrace(); // TODO: Add logging
-			throw new RuntimeException(e);
+			LOGGER.error("Exception throws while creating ui stylesheet object: filePath={}", filePath, e);
+			throw new ViewerUiException(e);
 		}
 	}
 
@@ -68,5 +72,4 @@ public class UiStylesheet {
 	public void setResourceRelativePath(String resourceRelativePath) {
 		this._resourceRelativePath = resourceRelativePath;
 	}
-
 }

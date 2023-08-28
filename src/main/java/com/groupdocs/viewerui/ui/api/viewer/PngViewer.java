@@ -3,6 +3,7 @@ package com.groupdocs.viewerui.ui.api.viewer;
 import com.groupdocs.viewer.Viewer;
 import com.groupdocs.viewer.options.PngViewOptions;
 import com.groupdocs.viewer.options.ViewInfoOptions;
+import com.groupdocs.viewerui.exception.ViewerUiException;
 import com.groupdocs.viewerui.ui.api.FileTypeResolver;
 import com.groupdocs.viewerui.ui.api.internalcaching.InternalCache;
 import com.groupdocs.viewerui.ui.api.licensing.ViewerLicenser;
@@ -13,12 +14,15 @@ import com.groupdocs.viewerui.ui.core.entities.FileCredentials;
 import com.groupdocs.viewerui.ui.core.entities.Page;
 import com.groupdocs.viewerui.ui.core.entities.PngPage;
 import com.groupdocs.viewerui.ui.core.extensions.CopyExtensions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
 public class PngViewer extends BaseViewer {
+	private static final Logger LOGGER = LoggerFactory.getLogger(PngViewer.class);
 
 	private final ViewerConfig _viewerConfig;
 
@@ -56,8 +60,8 @@ public class PngViewer extends BaseViewer {
 			return page;
 		}
 		catch (IOException e) {
-			e.printStackTrace(); // TODO: Add logging
-			throw new RuntimeException(e);
+			LOGGER.error("Exception throws while rendering png page: filePath={}, pageNumber={}", filePath, pageNumber, e);
+			throw new ViewerUiException(e);
 		}
 	}
 

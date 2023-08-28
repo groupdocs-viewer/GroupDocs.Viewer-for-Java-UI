@@ -13,6 +13,8 @@ import com.groupdocs.viewerui.ui.core.configuration.Config;
 import com.groupdocs.viewerui.ui.core.entities.*;
 import com.groupdocs.viewerui.ui.core.extensions.StringExtensions;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -27,25 +29,21 @@ import java.util.stream.IntStream;
 
 public class ViewerController implements Closeable {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ViewerController.class);
     public static final String JSON_CONTENT_TYPE = "application/json";
     private final FileNameResolver _fileNameResolver;
     private final SearchTermResolver _searchTermResolver;
-    private final UiConfigProvider _uiConfigProvider;
     private final IViewer _viewer;
-    // private final ILogger<ViewerController> _logger;
     private final Config _config;
     private FileStorageProvider _fileStorageProvider;
 
     public ViewerController(FileStorageProvider fileStorageProvider, FileNameResolver fileNameResolver,
-                            SearchTermResolver searchTermResolver, UiConfigProvider uiConfigProvider, IViewer viewer, Config config
-            /* ILogger<ViewerController> logger */) {
+                            SearchTermResolver searchTermResolver, IViewer viewer, Config config) {
         _fileStorageProvider = fileStorageProvider;
         _fileNameResolver = fileNameResolver;
         _searchTermResolver = searchTermResolver;
         _viewer = viewer;
-        // _logger = logger;
         _config = config;
-        _uiConfigProvider = uiConfigProvider;
     }
 
     public ViewerActionResult loadFileTree(LoadFileTreeRequest request) {
@@ -53,24 +51,25 @@ public class ViewerController implements Closeable {
             return errorJsonResult("Browsing files is disabled.");
         }
 
+        final String path = request.getPath();
         try {
             final IFileStorage fileStorage = _fileStorageProvider.provide();
-            List<FileSystemEntry> files = fileStorage.listDirsAndFiles(request.getPath());
+            List<FileSystemEntry> files = fileStorage.listDirsAndFiles(path);
 
             return okJsonResult(files.stream()
                     .map(entity -> new FileDescription(entity.getFilePath(), entity.getFilePath(), entity.isDirectory(),
-                            entity.getSize())).toList());
-        } catch (Exception ex) {
-            // _logger.LogError(ex, "Failed to load file tree.");
-
-            return errorJsonResult(ex.getMessage());
+                            entity.getSize())).collect(Collectors.toList()));
+        } catch (Exception e) {
+            LOGGER.error("Exception throws while loading file tree: path={}", path, e);
+            return errorJsonResult(e.getMessage());
         }
     }
 
     public ViewerActionResult loadDocumentDescription(LoadDocumentDescriptionRequest request) {
+        final String guid = request.getGuid();
         try {
             FileCredentials fileCredentials = new FileCredentials(
-                    request.getGuid(),
+                    guid,
                     request.getFileType(),
                     request.getPassword());
             DocumentInfo documentDescription = _viewer.getDocumentInfo(fileCredentials);
@@ -79,7 +78,7 @@ public class ViewerController implements Closeable {
             List<Page> pagesData = _viewer.getPages(fileCredentials, pageNumbers);
 
             List<PageDescription> pages = new ArrayList<>();
-            final String searchTerm = _searchTermResolver.resolveSearchTerm(request.getGuid());
+            final String searchTerm = _searchTermResolver.resolveSearchTerm(guid);
             for (PageInfo pageInfo : documentDescription.getPages()) {
                 final Optional<Page> pageData = pagesData.stream()
                         .filter(page -> page.getPageNumber() == pageInfo.getNumber())
@@ -94,21 +93,19 @@ public class ViewerController implements Closeable {
                 pages.add(pageDescription);
             }
 
-            LoadDocumentDescriptionResponse result = new LoadDocumentDescriptionResponse(request.getGuid(),
+            LoadDocumentDescriptionResponse result = new LoadDocumentDescriptionResponse(guid,
                     documentDescription.getFileType(), documentDescription.isPrintAllowed(), pages, searchTerm);
 
             return okJsonResult(result);
-        } catch (Exception ex) {
-            if (ex.getMessage() != null && ex.getMessage().contains("password")) {
+        } catch (Exception e) {
+            if (e.getMessage() != null && e.getMessage().contains("password")) {
                 String message = request.getPassword() == null || request.getPassword().isEmpty() ? "Password Required"
                         : "Incorrect Password";
 
                 return forbiddenJsonResult(message);
             }
-
-            // _logger.LogError(ex, "Failed to read document description.");
-
-            return errorJsonResult(ex.getMessage());
+            LOGGER.error("Exception throws while loading document description: guid={}", guid, e);
+            return errorJsonResult(e.getMessage());
         }
     }
 
@@ -117,8 +114,9 @@ public class ViewerController implements Closeable {
             return errorJsonResult("Loading page resources is disabled in image mode.");
         }
 
+        final String guid = request.getGuid();
         try {
-            FileCredentials fileCredentials = new FileCredentials(request.getGuid(), request.getFileType(),
+            FileCredentials fileCredentials = new FileCredentials(guid, request.getFileType(),
                     request.getPassword());
             byte[] bytes = _viewer.getPageResource(fileCredentials, request.getPageNumber(), request.getResourceName());
 
@@ -129,10 +127,9 @@ public class ViewerController implements Closeable {
             String contentType = StringExtensions.contentTypeFromFileName(request.getResourceName());
 
             return new ViewerActionResult(contentType, HttpURLConnection.HTTP_OK, bytes);
-        } catch (Exception ex) {
-            // _logger.LogError(ex, "Failed to load document page resource.");
-
-            return errorJsonResult(ex.getMessage());
+        } catch (Exception e) {
+            LOGGER.error("Exception throws while loading document page resource: guid={}", guid, e);
+            return errorJsonResult(e.getMessage());
         }
     }
 
@@ -147,10 +144,9 @@ public class ViewerController implements Closeable {
             byte[] bytes = fileStorage.readFile(path);
 
             return new ViewerActionResult("application/octet-stream", HttpURLConnection.HTTP_OK, new FileResponse(bytes, fileName));
-        } catch (Exception ex) {
-            // _logger.LogError(ex, "Failed to download a document.");
-
-            return errorJsonResult(ex.getMessage());
+        } catch (Exception e) {
+            LOGGER.error("Exception throws while downloading document: path={}", path, e);
+            return errorJsonResult(e.getMessage());
         }
     }
 
@@ -168,10 +164,9 @@ public class ViewerController implements Closeable {
             UploadFileResponse result = new UploadFileResponse(filePath);
 
             return okJsonResult(result);
-        } catch (Exception ex) {
-            // _logger.LogError(ex, "Failed to upload document.");
-
-            return errorJsonResult(ex.getMessage());
+        } catch (Exception e) {
+            LOGGER.error("Exception throws while uploading document: fileNameOrUrl={}", fileNameOrUrl, e);
+            return errorJsonResult(e.getMessage());
         }
     }
 
@@ -180,25 +175,24 @@ public class ViewerController implements Closeable {
             return errorJsonResult("Printing files is disabled.");
         }
 
+        final String guid = request.getGuid();
         try {
-            FileCredentials fileCredentials = new FileCredentials(request.getGuid(), request.getFileType(),
+            FileCredentials fileCredentials = new FileCredentials(guid, request.getFileType(),
                     request.getPassword());
 
-            String fileName = _fileNameResolver.resolveFileName(request.getGuid());
+            String fileName = _fileNameResolver.resolveFileName(guid);
             String pdfFileName = StringExtensions.changeExtension(fileName, ".pdf");
             byte[] pdfFileBytes = _viewer.getPdf(fileCredentials);
 
             return new ViewerActionResult("application/pdf", HttpURLConnection.HTTP_OK, new FileResponse(pdfFileBytes, pdfFileName));
-        } catch (Exception ex) {
-            if (ex.getMessage() != null && ex.getMessage().contains("password")) {
+        } catch (Exception e) {
+            if (e.getMessage() != null && e.getMessage().contains("password")) {
                 String message = request.getPassword() == null || request.getPassword().isEmpty() ? "Password Required" : "Incorrect Password";
 
                 return forbiddenJsonResult(message);
             }
-
-            // _logger.LogError(ex, "Failed to create PDF file.");
-
-            return errorJsonResult(ex.getMessage());
+            LOGGER.error("Exception throws while printing pdf: guid={}", guid, e);
+            return errorJsonResult(e.getMessage());
         }
     }
 
@@ -213,32 +207,32 @@ public class ViewerController implements Closeable {
     }
 
     public ViewerActionResult loadDocumentPages(LoadDocumentPagesRequest request) {
+        final String guid = request.getGuid();
         try {
             FileCredentials fileCredentials = new FileCredentials(
-                    request.getGuid(), request.getFileType(), request.getPassword());
+                    guid, request.getFileType(), request.getPassword());
             List<Page> pages = _viewer.getPages(fileCredentials, request.getPages());
             List<PageContent> pageContents = pages.stream()
                     .map(page -> new PageContent(page.getPageNumber(), page.getContent()))
                     .collect(Collectors.toList());
 
             return okJsonResult(pageContents);
-        } catch (Exception ex) {
-            if (ex.getMessage() != null && ex.getMessage().contains("password")) {
+        } catch (Exception e) {
+            if (e.getMessage() != null && e.getMessage().contains("password")) {
                 String message = request.getPassword() == null || request.getPassword().isEmpty() ? "Password Required"
                         : "Incorrect Password";
 
                 return forbiddenJsonResult(message);
             }
-
-            // _logger.LogError(ex, "Failed to retrieve document pages.");
-
-            return errorJsonResult(ex.getMessage());
+            LOGGER.error("Exception throws while loading document pages: guid={}", guid, e);
+            return errorJsonResult(e.getMessage());
         }
     }
 
     public ViewerActionResult loadDocumentPage(LoadDocumentPageRequest request) {
+        final String guid = request.getGuid();
         try {
-            FileCredentials fileCredentials = new FileCredentials(request.getGuid(), request.getFileType(),
+            FileCredentials fileCredentials = new FileCredentials(guid, request.getFileType(),
                     request.getPassword());
             Page page = _viewer.getPage(fileCredentials, request.getPage());
             PageContent pageContent = new PageContent(page.getPageNumber(), page.getContent());
@@ -251,9 +245,7 @@ public class ViewerController implements Closeable {
 
                 return forbiddenJsonResult(message);
             }
-
-            // _logger.LogError(ex, "Failed to retrieve document page.");
-
+            LOGGER.error("Exception throws while loading document page: guid={}", guid);
             return errorJsonResult(ex.getMessage());
         }
     }

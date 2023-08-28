@@ -2,7 +2,6 @@ package com.groupdocs.viewerui.ui.api.factory;
 
 import com.groupdocs.viewerui.ui.api.FileNameResolverFactory;
 import com.groupdocs.viewerui.ui.api.SearchTermResolverFactory;
-import com.groupdocs.viewerui.ui.api.DefaultUiConfigProvider;
 import com.groupdocs.viewerui.ui.api.controller.ViewerController;
 import com.groupdocs.viewerui.ui.core.FileStorageProvider;
 import com.groupdocs.viewerui.ui.core.IViewer;
@@ -16,7 +15,6 @@ public class DefaultViewerControllerFactory implements ViewerControllerFactory {
         return new ViewerController(fileStorageProvider,
                 FileNameResolverFactory.getInstance(),
                 SearchTermResolverFactory.getInstance(),
-                new DefaultUiConfigProvider(),
                 viewer,
                 config
         );
