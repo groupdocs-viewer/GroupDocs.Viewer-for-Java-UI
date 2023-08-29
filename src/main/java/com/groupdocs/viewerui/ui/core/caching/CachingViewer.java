@@ -1,6 +1,6 @@
 package com.groupdocs.viewerui.ui.core.caching;
 
-import com.groupdocs.viewerui.ui.api.cache.IFileCache;
+import com.groupdocs.viewerui.ui.api.cache.FileCache;
 import com.groupdocs.viewerui.ui.core.IViewer;
 import com.groupdocs.viewerui.ui.core.entities.DocumentInfo;
 import com.groupdocs.viewerui.ui.core.entities.FileCredentials;
@@ -14,9 +14,9 @@ import java.util.stream.Stream;
 public class CachingViewer implements IViewer {
     private static final Map<String, Object> _fileLocks = new WeakHashMap<>();
     private final IViewer _viewer;
-    private final IFileCache _fileCache;
+    private final FileCache _fileCache;
 
-    public CachingViewer(IViewer viewer, IFileCache fileCache) {
+    public CachingViewer(IViewer viewer, FileCache fileCache) {
         _viewer = viewer;
         _fileCache = fileCache;
     }
@@ -42,10 +42,10 @@ public class CachingViewer implements IViewer {
 
     public Page getPage(FileCredentials fileCredentials, int pageNumber) {
         String cacheKey = CacheKeys.getPageCacheKey(pageNumber, getPageExtension());
-        final byte[][] bytes = {_fileCache.get(cacheKey, fileCredentials.getFilePath())};
+        final byte[][] bytes = {_fileCache.get(cacheKey, fileCredentials.getFilePath(), byte[].class)};
         if (bytes[0] == null) {
             synchronizedBlock(cacheKey, () -> {
-                bytes[0] = _fileCache.get(cacheKey, fileCredentials.getFilePath());
+                bytes[0] = _fileCache.get(cacheKey, fileCredentials.getFilePath(), byte[].class);
                 // If still does not exist
                 if (bytes[0] == null) {
                     Page page = _viewer.getPage(fileCredentials, pageNumber);
@@ -53,6 +53,7 @@ public class CachingViewer implements IViewer {
                     saveResources(fileCredentials.getFilePath(), page.getPageNumber(), page.getResources().stream());
 
                     bytes[0] = page.getData();
+                    _fileCache.set(cacheKey, fileCredentials.getFilePath(), bytes[0]);
                 }
             });
         }
@@ -63,13 +64,14 @@ public class CachingViewer implements IViewer {
 
     public DocumentInfo getDocumentInfo(FileCredentials fileCredentials) {
         String cacheKey = CacheKeys.FILE_INFO_CACHE_KEY;
-        DocumentInfo[] documentInfo = {_fileCache.get(cacheKey, fileCredentials.getFilePath())};
+        DocumentInfo[] documentInfo = {_fileCache.get(cacheKey, fileCredentials.getFilePath(), DocumentInfo.class)};
         if (documentInfo[0] == null) {
             synchronizedBlock(fileCredentials.getFilePath(), () ->
             {
-                documentInfo[0] = _fileCache.get(cacheKey, fileCredentials.getFilePath());
+                documentInfo[0] = _fileCache.get(cacheKey, fileCredentials.getFilePath(), DocumentInfo.class);
                 if (documentInfo[0] == null) {
                     documentInfo[0] = _viewer.getDocumentInfo(fileCredentials);
+                    _fileCache.set(cacheKey, fileCredentials.getFilePath(), documentInfo[0]);
                 }
 
             });
@@ -79,12 +81,13 @@ public class CachingViewer implements IViewer {
 
     public byte[] getPdf(FileCredentials fileCredentials) {
         String cacheKey = CacheKeys.PDF_FILE_CACHE_KEY;
-        final byte[][] bytes = {_fileCache.get(cacheKey, fileCredentials.getFilePath())};
+        final byte[][] bytes = {_fileCache.get(cacheKey, fileCredentials.getFilePath(), byte[].class)};
         if (bytes[0] == null) {
             synchronizedBlock(fileCredentials.getFilePath(), () -> {
-                bytes[0] = _fileCache.get(cacheKey, fileCredentials.getFilePath());
+                bytes[0] = _fileCache.get(cacheKey, fileCredentials.getFilePath(), byte[].class);
                 if (bytes[0] == null) {
                     bytes[0] = _viewer.getPdf(fileCredentials);
+                    _fileCache.set(cacheKey, fileCredentials.getFilePath(), bytes[0]);
                 }
             });
         }
@@ -93,13 +96,14 @@ public class CachingViewer implements IViewer {
 
     public byte[] getPageResource(FileCredentials fileCredentials, int pageNumber, String resourceName) {
         String cacheKey = CacheKeys.getHtmlPageResourceCacheKey(pageNumber, resourceName);
-        final byte[][] bytes = {_fileCache.get(cacheKey, fileCredentials.getFilePath())};
+        final byte[][] bytes = {_fileCache.get(cacheKey, fileCredentials.getFilePath(), byte[].class)};
 
         if (bytes[0] == null) {
             synchronizedBlock(fileCredentials.getFilePath(), () -> {
-                bytes[0] = _fileCache.get(cacheKey, fileCredentials.getFilePath());
+                bytes[0] = _fileCache.get(cacheKey, fileCredentials.getFilePath(), byte[].class);
                 if (bytes[0] == null) {
                     bytes[0] = _viewer.getPageResource(fileCredentials, pageNumber, resourceName);
+                    _fileCache.set(cacheKey, fileCredentials.getFilePath(), bytes[0]);
                 }
             });
         }
@@ -196,7 +200,7 @@ public class CachingViewer implements IViewer {
         return Arrays.stream(pageNumbers)
                 .mapToObj(pageNumber -> {
                     final String pageCacheKey = CacheKeys.getPageCacheKey(pageNumber, getPageExtension());
-                    return new CachedPage(pageNumber, _fileCache.get(pageCacheKey, filePath));
+                    return new CachedPage(pageNumber, _fileCache.get(pageCacheKey, filePath, byte[].class));
                 }).collect(Collectors.toList());
     }
 

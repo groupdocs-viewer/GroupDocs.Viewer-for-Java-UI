@@ -2,8 +2,8 @@ package com.groupdocs.viewerui.ui.api.factory;
 
 import com.groupdocs.viewerui.ui.api.FileTypeResolver;
 import com.groupdocs.viewerui.ui.api.FileTypeResolverFactory;
-import com.groupdocs.viewerui.ui.api.cache.memory.InMemoryFileCache;
-import com.groupdocs.viewerui.ui.api.cache.config.CacheConfig;
+import com.groupdocs.viewerui.ui.api.cache.FileCache;
+import com.groupdocs.viewerui.ui.api.cache.FileCacheFactory;
 import com.groupdocs.viewerui.ui.api.internalcaching.InternalCache;
 import com.groupdocs.viewerui.ui.api.internalcaching.InternalCacheFactory;
 import com.groupdocs.viewerui.ui.api.licensing.ViewerLicenser;
@@ -51,8 +51,8 @@ public class DefaultViewerFactory implements ViewerFactory {
                 break;
         }
 
-        final CacheConfig cacheConfig = new CacheConfig(); // TODO: move to addInMemoryCache(...)
-        return new CachingViewer(viewer, new InMemoryFileCache(memoryCache, cacheConfig));
+        final FileCache fileCache = FileCacheFactory.newInstance();
+        return new CachingViewer(viewer, fileCache);
     }
 
 }

@@ -1,6 +1,6 @@
-package com.groupdocs.viewerui.ui.api.cache.config;
+package com.groupdocs.viewerui.ui.core.cache.memory.config;
 
-public class CacheConfig {
+public class InMemoryCacheConfig {
     private int _cacheEntryExpirationTimeoutMinutes = 0;
 
     private boolean _groupCacheEntriesByFile;
@@ -43,5 +43,13 @@ public class CacheConfig {
      */
     public void setCacheEntryExpirationTimeoutMinutes(int cacheEntryExpirationTimeoutMinutes) {
         this._cacheEntryExpirationTimeoutMinutes = cacheEntryExpirationTimeoutMinutes;
+    }
+
+    @Override
+    public String toString() {
+        return "InMemoryCacheConfig {" +
+               " cacheEntryExpirationTimeoutMinutes=" + _cacheEntryExpirationTimeoutMinutes +
+               ", groupCacheEntriesByFile=" + _groupCacheEntriesByFile +
+               " }";
     }
 }

@@ -1,13 +1,19 @@
 package com.groupdocs.viewerui.ui.core.entities;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class PageInfo {
 
+	@JsonProperty("width")
 	private int _width;
 
+	@JsonProperty("height")
 	private int _height;
 
+	@JsonProperty("number")
 	private int _number;
 
+	@JsonProperty("name")
 	private String _name;
 
 	public int getWidth() {

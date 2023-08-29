@@ -5,6 +5,7 @@ import com.groupdocs.viewerui.exception.ViewerUiException;
 import com.groupdocs.viewerui.function.HeaderAdder;
 import com.groupdocs.viewerui.ui.api.UiConfigProvider;
 import com.groupdocs.viewerui.ui.api.UiConfigProviderFactory;
+import com.groupdocs.viewerui.ui.api.cache.FileCacheFactory;
 import com.groupdocs.viewerui.ui.api.controller.ViewerController;
 import com.groupdocs.viewerui.ui.api.factory.DefaultViewerControllerFactory;
 import com.groupdocs.viewerui.ui.api.factory.DefaultViewerFactory;
@@ -17,6 +18,12 @@ import com.groupdocs.viewerui.ui.configuration.ApiOptions;
 import com.groupdocs.viewerui.ui.configuration.UiOptions;
 import com.groupdocs.viewerui.ui.configuration.ViewerConfig;
 import com.groupdocs.viewerui.ui.core.*;
+import com.groupdocs.viewerui.ui.core.cache.internal.MemoryCache;
+import com.groupdocs.viewerui.ui.core.cache.internal.MemoryCacheFactory;
+import com.groupdocs.viewerui.ui.core.cache.local.LocalFileCache;
+import com.groupdocs.viewerui.ui.core.cache.local.config.LocalCacheConfig;
+import com.groupdocs.viewerui.ui.core.cache.memory.InMemoryFileCache;
+import com.groupdocs.viewerui.ui.core.cache.memory.config.InMemoryCacheConfig;
 import com.groupdocs.viewerui.ui.core.configuration.Config;
 import com.groupdocs.viewerui.ui.core.entities.ConfigEntry;
 import com.groupdocs.viewerui.ui.core.extensions.StringExtensions;
@@ -40,8 +47,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class CommonViewerEndpointHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CommonViewerEndpointHandler.class);
     public static final String CONTENT_TYPE = "Content-Type";
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommonViewerEndpointHandler.class);
     private UiOptions _uiOptions = new UiOptions();
 
     private ApiOptions _apiOptions = new ApiOptions();
@@ -119,22 +126,40 @@ public class CommonViewerEndpointHandler {
     public CommonViewerEndpointHandler setupLocalStorage(Path storagePath) {
         _fileStorage = new LocalFileStorage(storagePath);
         LOGGER.info("GroupDocs Viewer local storage has been set up.");
-//        LOGGER.debug("Api options: {}", apiOptions); // TODO:
+        LOGGER.debug("Local storage path: {}", storagePath);
         return this;
     }
 
-    public CommonViewerEndpointHandler setupLocalCache() {
+    public CommonViewerEndpointHandler setupLocalCache(Consumer<LocalCacheConfig> cacheConfigConsumer) {
+        final LocalCacheConfig cacheConfig = new LocalCacheConfig();
+        cacheConfigConsumer.accept(cacheConfig);
+        final boolean supplierPresent = FileCacheFactory.isSupplierPresent();
+        FileCacheFactory.setSupplier(() -> {
+            final ISerializer serializer = getSerializer();
+            return new LocalFileCache(serializer, cacheConfig);
+        });
         LOGGER.info("GroupDocs Viewer local cache has been set up.");
-//        LOGGER.debug("Api options: {}", apiOptions); // TODO:
+        LOGGER.debug("Cache config: {}, is previous cache setup replaced: {}", cacheConfig, supplierPresent);
+        return this;
+    }
+
+    public CommonViewerEndpointHandler setupInMemoryCache(Consumer<InMemoryCacheConfig> cacheConfigConsumer) {
+        final InMemoryCacheConfig cacheConfig = new InMemoryCacheConfig();
+        cacheConfigConsumer.accept(cacheConfig);
+        final boolean supplierPresent = FileCacheFactory.isSupplierPresent();
+        FileCacheFactory.setSupplier(() -> {
+            final MemoryCache memoryCache = MemoryCacheFactory.getInstance();
+            return new InMemoryFileCache(memoryCache, cacheConfig);
+        });
+        LOGGER.info("GroupDocs Viewer im-memory cache has been set up.");
+        LOGGER.debug("Cache config: {}, is previous cache setup replaced: {}", cacheConfig, supplierPresent);
         return this;
     }
 
     public int handleViewerRequest(String requestUrl, String queryString, InputStream requestStream, HeaderAdder headerAdder, OutputStream responseStream) {
-        final ViewerControllerFactory viewerControllerFactory = getViewerControllerFactory();
-        final IViewer viewer = createViewer();
-        final Config config = getConfig();
-        // will be disposed by viewerController
-        try (ViewerController viewerController = viewerControllerFactory.createViewerController(config, viewer, () -> _fileStorage)) {
+        LOGGER.info("Handling Viewer request.");
+        LOGGER.debug("Request url: {}, query string: {}", requestUrl, queryString);
+        try {
             final IActionNameDetector requestDetector = getRequestDetector();
             final ActionName actionName = requestDetector.detectActionName(requestUrl);
             if (actionName == null) {
@@ -146,7 +171,7 @@ public class CommonViewerEndpointHandler {
                 case LOAD_CONFIG:
                     return handleConfigRequest(headerAdder, responseStream);
                 default:
-                    return handleApiRequest(viewerController, actionName, queryString, requestStream, headerAdder, responseStream);
+                    return handleApiRequest(actionName, queryString, requestStream, headerAdder, responseStream);
             }
         } catch (ViewerUiException e) {
             throw e;
@@ -168,6 +193,8 @@ public class CommonViewerEndpointHandler {
         final IViewer viewer = createViewer();
         final Config config = getConfig();
         final ISerializer serializer = getSerializer();
+        LOGGER.info("Handling Viewer upload request.");
+        LOGGER.debug("Submitted file name: {}, is rewrite: {}", submittedFileName, isRewrite);
         // will be disposed by viewerController
         try (ViewerController viewerController = viewerControllerFactory.createViewerController(config, viewer, () -> _fileStorage)) {
             final ViewerActionResult uploadDocumentResult = viewerController.uploadDocument(submittedFileName, submittedFileStream, isRewrite);
@@ -207,111 +234,118 @@ public class CommonViewerEndpointHandler {
         return HttpURLConnection.HTTP_OK;
     }
 
-    private int handleApiRequest(ViewerController viewerController, ActionName actionName, String queryString, InputStream requestStream, HeaderAdder headerAdder, OutputStream responseStream) {
+    private int handleApiRequest(ActionName actionName, String queryString, InputStream requestStream, HeaderAdder headerAdder, OutputStream responseStream) {
+        if (actionName == ActionName.UI_RESOURCE || actionName == ActionName.LOAD_CONFIG) {
+            // They have already handled
+            return HttpURLConnection.HTTP_INTERNAL_ERROR;
+        }
+
+        final ViewerControllerFactory viewerControllerFactory = getViewerControllerFactory();
+        // will be disposed by viewerController
+        final IViewer viewer = createViewer();
+        final Config config = getConfig();
         final ISerializer serializer = getSerializer();
-        switch (actionName) {
-            case UI_RESOURCE:
-                break;
-            case LOAD_CONFIG:
-                break;
-            case API_LOAD_FILE_TREE:
-                LoadFileTreeRequest fileTreeRequest = serializer.deserialize(requestStream, LoadFileTreeRequest.class);
-                final ViewerActionResult fileTreeResult = viewerController.loadFileTree(fileTreeRequest);
-                headerAdder.addHeader(CONTENT_TYPE, fileTreeResult.getContentType());
-                serializer.serialize(fileTreeResult.getValue(), responseStream);
-                return fileTreeResult.getStatusCode();
-            case API_LOAD_DOCUMENT_DESCRIPTION:
-                LoadDocumentDescriptionRequest documentDescriptionRequest = serializer.deserialize(requestStream, LoadDocumentDescriptionRequest.class);
-                final ViewerActionResult documentDescriptionResult = viewerController.loadDocumentDescription(documentDescriptionRequest);
-                headerAdder.addHeader(CONTENT_TYPE, documentDescriptionResult.getContentType());
-                serializer.serialize(documentDescriptionResult.getValue(), responseStream);
-                return documentDescriptionResult.getStatusCode();
-            case API_LOAD_DOCUMENT_PAGE_RESOURCE:
-                LoadDocumentPageResourceRequest documentPageResourceRequest = createFromQueryString(queryString);
-                final ViewerActionResult documentPageResourceResult = viewerController.loadDocumentPageResource(documentPageResourceRequest);
-                headerAdder.addHeader(CONTENT_TYPE, documentPageResourceResult.getContentType());
-                final int documentPageResourceStatusCode = documentPageResourceResult.getStatusCode();
-                if (documentPageResourceStatusCode == HttpURLConnection.HTTP_OK) {
-                    final Object documentPageResourceResultValue = documentPageResourceResult.getValue();
-                    if (documentPageResourceResultValue instanceof byte[]) {
-                        try {
-                            responseStream.write((byte[]) documentPageResourceResultValue);
-                        } catch (IOException e) {
-                            LOGGER.error("Exception throws while writing document page data to response stream: actionName={} queryString={}", actionName, queryString, e);
-                            throw new ViewerUiException(e);
+        try (ViewerController viewerController = viewerControllerFactory.createViewerController(config, viewer, () -> _fileStorage)) {
+            switch (actionName) {
+                case API_LOAD_FILE_TREE:
+                    LoadFileTreeRequest fileTreeRequest = serializer.deserialize(requestStream, LoadFileTreeRequest.class);
+                    final ViewerActionResult fileTreeResult = viewerController.loadFileTree(fileTreeRequest);
+                    headerAdder.addHeader(CONTENT_TYPE, fileTreeResult.getContentType());
+                    serializer.serialize(fileTreeResult.getValue(), responseStream);
+                    return fileTreeResult.getStatusCode();
+                case API_LOAD_DOCUMENT_DESCRIPTION:
+                    LoadDocumentDescriptionRequest documentDescriptionRequest = serializer.deserialize(requestStream, LoadDocumentDescriptionRequest.class);
+                    final ViewerActionResult documentDescriptionResult = viewerController.loadDocumentDescription(documentDescriptionRequest);
+                    headerAdder.addHeader(CONTENT_TYPE, documentDescriptionResult.getContentType());
+                    serializer.serialize(documentDescriptionResult.getValue(), responseStream);
+                    return documentDescriptionResult.getStatusCode();
+                case API_LOAD_DOCUMENT_PAGE_RESOURCE:
+                    LoadDocumentPageResourceRequest documentPageResourceRequest = createFromQueryString(queryString);
+                    final ViewerActionResult documentPageResourceResult = viewerController.loadDocumentPageResource(documentPageResourceRequest);
+                    headerAdder.addHeader(CONTENT_TYPE, documentPageResourceResult.getContentType());
+                    final int documentPageResourceStatusCode = documentPageResourceResult.getStatusCode();
+                    if (documentPageResourceStatusCode == HttpURLConnection.HTTP_OK) {
+                        final Object documentPageResourceResultValue = documentPageResourceResult.getValue();
+                        if (documentPageResourceResultValue instanceof byte[]) {
+                            try {
+                                responseStream.write((byte[]) documentPageResourceResultValue);
+                            } catch (IOException e) {
+                                LOGGER.error("Exception throws while writing document page data to response stream: actionName={} queryString={}", actionName, queryString, e);
+                                throw new ViewerUiException(e);
+                            }
+                        } else {
+                            LOGGER.warn("Unexpected type of response object: {}", documentPageResourceResultValue);
+                            return HttpURLConnection.HTTP_INTERNAL_ERROR;
                         }
                     } else {
-                        LOGGER.warn("Unexpected type of response object: {}", documentPageResourceResultValue);
-                        return HttpURLConnection.HTTP_INTERNAL_ERROR;
+                        serializer.serialize(documentPageResourceResult.getValue(), responseStream);
                     }
-                } else {
-                    serializer.serialize(documentPageResourceResult.getValue(), responseStream);
-                }
-                return documentPageResourceResult.getStatusCode();
-            case API_DOWNLOAD_DOCUMENT:
-                final Map<String, String> queryParams = UrlExtensions.extractParams(queryString);
-                final String filePath = queryParams.get("path");
-                final ViewerActionResult downloadDocumentResult = viewerController.downloadDocument(filePath);
-                headerAdder.addHeader(CONTENT_TYPE, downloadDocumentResult.getContentType());
-                final int downloadDocumentStatusCode = downloadDocumentResult.getStatusCode();
-                if (downloadDocumentStatusCode == HttpURLConnection.HTTP_OK) {
-                    final Object downloadDocumentResultValue = downloadDocumentResult.getValue();
-                    if (downloadDocumentResultValue instanceof FileResponse) {
-                        final FileResponse fileResponse = (FileResponse) downloadDocumentResultValue;
-                        headerAdder.addHeader("Content-Length", Long.toString(fileResponse.data.length));
-                        headerAdder.addHeader("Content-Disposition", "attachment; filename=\"" + fileResponse.fileName + "\"; filename*=UTF-8''" + fileResponse.fileName);
-                        try {
-                            responseStream.write(fileResponse.data);
-                        } catch (IOException e) {
-                            LOGGER.error("Exception throws while writing file data to response stream: actionName={} queryString={}", actionName, queryString, e);
-                            throw new ViewerUiException(e);
+                    return documentPageResourceResult.getStatusCode();
+                case API_DOWNLOAD_DOCUMENT:
+                    final Map<String, String> queryParams = UrlExtensions.extractParams(queryString);
+                    final String filePath = queryParams.get("path");
+                    final ViewerActionResult downloadDocumentResult = viewerController.downloadDocument(filePath);
+                    headerAdder.addHeader(CONTENT_TYPE, downloadDocumentResult.getContentType());
+                    final int downloadDocumentStatusCode = downloadDocumentResult.getStatusCode();
+                    if (downloadDocumentStatusCode == HttpURLConnection.HTTP_OK) {
+                        final Object downloadDocumentResultValue = downloadDocumentResult.getValue();
+                        if (downloadDocumentResultValue instanceof FileResponse) {
+                            final FileResponse fileResponse = (FileResponse) downloadDocumentResultValue;
+                            headerAdder.addHeader("Content-Length", Long.toString(fileResponse.data.length));
+                            headerAdder.addHeader("Content-Disposition", "attachment; filename=\"" + fileResponse.fileName + "\"; filename*=UTF-8''" + fileResponse.fileName);
+                            try {
+                                responseStream.write(fileResponse.data);
+                            } catch (IOException e) {
+                                LOGGER.error("Exception throws while writing file data to response stream: actionName={} queryString={}", actionName, queryString, e);
+                                throw new ViewerUiException(e);
+                            }
+                        } else {
+                            LOGGER.warn("Unexpected type of response object: {}", downloadDocumentResultValue);
+                            return HttpURLConnection.HTTP_INTERNAL_ERROR;
                         }
                     } else {
-                        LOGGER.warn("Unexpected type of response object: {}", downloadDocumentResultValue);
-                        return HttpURLConnection.HTTP_INTERNAL_ERROR;
+                        serializer.serialize(downloadDocumentResult.getValue(), responseStream);
                     }
-                } else {
-                    serializer.serialize(downloadDocumentResult.getValue(), responseStream);
-                }
-                return downloadDocumentStatusCode;
-            case API_LOAD_DOCUMENT_PAGES:
-                LoadDocumentPagesRequest documentPagesRequest = serializer.deserialize(requestStream, LoadDocumentPagesRequest.class);
-                final ViewerActionResult documentPagesResult = viewerController.loadDocumentPages(documentPagesRequest);
-                headerAdder.addHeader(CONTENT_TYPE, documentPagesResult.getContentType());
-                serializer.serialize(documentPagesResult.getValue(), responseStream);
-                return documentPagesResult.getStatusCode();
-            case API_PRINT_PDF:
-                PrintPdfRequest printPdfRequest = serializer.deserialize(requestStream, PrintPdfRequest.class);
-                final ViewerActionResult printPdfResult = viewerController.printPdf(printPdfRequest);
-                headerAdder.addHeader(CONTENT_TYPE, printPdfResult.getContentType());
-                final int printPdfStatusCode = printPdfResult.getStatusCode();
-                if (printPdfStatusCode == HttpURLConnection.HTTP_OK) {
-                    final Object printPdfResultValue = printPdfResult.getValue();
-                    if (printPdfResultValue instanceof FileResponse) {
-                        final FileResponse fileResponse = (FileResponse) printPdfResultValue;
-                        headerAdder.addHeader("Content-Length", Long.toString(fileResponse.data.length));
-                        headerAdder.addHeader("Content-Disposition", "attachment; filename=\"" + fileResponse.fileName + "\"; filename*=UTF-8''" + fileResponse.fileName);
-                        try {
-                            responseStream.write(fileResponse.data);
-                        } catch (IOException e) {
-                            LOGGER.error("Exception throws while writing pdf print data to response stream: actionName={} queryString={}", actionName, queryString, e);
-                            throw new ViewerUiException(e);
+                    return downloadDocumentStatusCode;
+                case API_LOAD_DOCUMENT_PAGES:
+                    LoadDocumentPagesRequest documentPagesRequest = serializer.deserialize(requestStream, LoadDocumentPagesRequest.class);
+                    final ViewerActionResult documentPagesResult = viewerController.loadDocumentPages(documentPagesRequest);
+                    headerAdder.addHeader(CONTENT_TYPE, documentPagesResult.getContentType());
+                    serializer.serialize(documentPagesResult.getValue(), responseStream);
+                    return documentPagesResult.getStatusCode();
+                case API_PRINT_PDF:
+                    PrintPdfRequest printPdfRequest = serializer.deserialize(requestStream, PrintPdfRequest.class);
+                    final ViewerActionResult printPdfResult = viewerController.printPdf(printPdfRequest);
+                    headerAdder.addHeader(CONTENT_TYPE, printPdfResult.getContentType());
+                    final int printPdfStatusCode = printPdfResult.getStatusCode();
+                    if (printPdfStatusCode == HttpURLConnection.HTTP_OK) {
+                        final Object printPdfResultValue = printPdfResult.getValue();
+                        if (printPdfResultValue instanceof FileResponse) {
+                            final FileResponse fileResponse = (FileResponse) printPdfResultValue;
+                            headerAdder.addHeader("Content-Length", Long.toString(fileResponse.data.length));
+                            headerAdder.addHeader("Content-Disposition", "attachment; filename=\"" + fileResponse.fileName + "\"; filename*=UTF-8''" + fileResponse.fileName);
+                            try {
+                                responseStream.write(fileResponse.data);
+                            } catch (IOException e) {
+                                LOGGER.error("Exception throws while writing pdf print data to response stream: actionName={} queryString={}", actionName, queryString, e);
+                                throw new ViewerUiException(e);
+                            }
+                        } else {
+                            LOGGER.warn("Unexpected type of response object: {}", printPdfResultValue);
+                            return HttpURLConnection.HTTP_INTERNAL_ERROR;
                         }
                     } else {
-                        LOGGER.warn("Unexpected type of response object: {}", printPdfResultValue);
-                        return HttpURLConnection.HTTP_INTERNAL_ERROR;
+                        serializer.serialize(printPdfResult.getValue(), responseStream);
                     }
-                } else {
-                    serializer.serialize(printPdfResult.getValue(), responseStream);
-                }
-                return printPdfStatusCode;
+                    return printPdfStatusCode;
 //            case API_UPLOAD_DOCUMENT: // handleViewerUploadRequest
 
 //            case API_LOAD_DOCUMENT_PAGE:
 //                break;
 //            case API_LOAD_THUMBNAILS:
 //                break;
-            default:
+                default:
+            }
         }
         return HttpURLConnection.HTTP_NOT_FOUND;
     }

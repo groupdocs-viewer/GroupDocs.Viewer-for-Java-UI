@@ -1,13 +1,18 @@
 package com.groupdocs.viewerui.ui.core.entities;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
 public class DocumentInfo {
 
+	@JsonProperty("fileType")
 	private String _fileType;
 
+	@JsonProperty("printAllowed")
 	private boolean _printAllowed;
 
+	@JsonProperty("pages")
 	private List<PageInfo> _pages;
 
 	public String getFileType() {

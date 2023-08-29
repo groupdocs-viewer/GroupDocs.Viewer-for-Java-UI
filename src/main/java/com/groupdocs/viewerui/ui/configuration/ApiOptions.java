@@ -12,4 +12,10 @@ public class ApiOptions {
 		this._apiEndpoint = apiEndpoint;
 	}
 
+	@Override
+	public String toString() {
+		return "ApiOptions {" +
+			   " apiEndpoint='" + _apiEndpoint + '\'' +
+			   " }";
+	}
 }

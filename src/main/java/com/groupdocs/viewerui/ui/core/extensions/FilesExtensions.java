@@ -12,6 +12,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.stream.Stream;
 
 public class FilesExtensions {
+    public static final String[] INVALID_PATH_CHARS = new String[]{"\\", "/", ":", "*", "?", "\"", "<", ">", "|"};
     private static final Logger LOGGER = LoggerFactory.getLogger(FilesExtensions.class);
     public static Stream<Path> list(Path dir) {
         try {
