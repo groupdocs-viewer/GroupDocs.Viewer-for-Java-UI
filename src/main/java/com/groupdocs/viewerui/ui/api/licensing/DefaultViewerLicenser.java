@@ -82,14 +82,23 @@ public class DefaultViewerLicenser implements ViewerLicenser {
 		synchronized (_lock) {
 			if (!_licenseSet) {
 				License license = new License();
-				if (licensePath.startsWith("http")) {
-					try {
-						license.setLicense(new URL(licensePath));
-					} catch (MalformedURLException e) {
-						LOGGER.error("Exception throws while setting license from URL", e);
+				try {
+					if (licensePath.startsWith("http")) {
+						try {
+							license.setLicense(new URL(licensePath));
+						} catch (MalformedURLException e) {
+							LOGGER.error("Exception throws while setting license from URL", e);
+							throw e;
+						}
+					} else {
+						license.setLicense(licensePath);
 					}
-				} else {
-					license.setLicense(licensePath);
+				} catch (Exception e) {
+					if (LOGGER.isDebugEnabled()) {
+						LOGGER.warn("License was not set! GroupDocs.Viewer will work in trial mode.", e);
+					} else {
+						LOGGER.warn("License was not set! GroupDocs.Viewer will work in trial mode.");
+					}
 				}
 
 				_licenseSet = true;

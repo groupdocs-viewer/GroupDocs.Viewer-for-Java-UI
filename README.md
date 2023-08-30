@@ -1,87 +1,105 @@
 # GroupDocs.Viewer-for-Java-UI
-UI - User Interface for GroupDocs.Viewer for Java. API for easily integrating a document viewer into 3rd-party projects.
+User Interface for GroupDocs.Viewer for Java. API for easily integrating a document viewer into 3rd-party projects.
 
 ## How to use with Spring
 
-1. Create configuration class and configure Viewer
+1. Add required dependencies
+   ```xml
+    <dependencies>
+      <dependency>
+        <groupId>com.groupdocs</groupId>
+        <artifactId>groupdocs-viewer-ui</artifactId>
+        <version>23.7</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.groupdocs</groupId>
+        <artifactId>groupdocs-viewer</artifactId>
+        <version>23.7</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>2.13.4.1</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>2.13.3</version>
+      </dependency>
+    </dependencies>
+   ```
+
+2. Configure GroupDocs.Viewer UI
 
     ```java
     @Configuration
-    class ViewerConfiguration {
-    
+    public class ViewerConfiguration {
         public static final String VIEWER_UI_PATH = "/viewer";
-    
+	
         public static final String VIEWER_CONFIG_ENDPOINT = "/viewer-config";
-    
+	
         public static final String VIEWER_API_ENDPOINT = "/viewer-api";
-    
-        private CommonEndpointMapper commonEndpointMapper;
-    
+	
+        private ServletsViewerEndpointHandler _viewerEndpointHandler;
+	
         @PostConstruct
         public void init() {
-            commonEndpointMapper = CommonEndpointMapper.setupGroupDocsViewer((viewerConfig, config) -> {
-                        viewerConfig.setViewerType(ViewerType.PNG);
-    
-                        config.setPreloadPageCount(2);
-                        config.setBaseUrl("http://127.0.0.1:8080");
-                    })
-    
-                    .setupGroupDocsViewerUI(uiOptions -> {
-                        uiOptions.setUiPath(VIEWER_UI_PATH);
-                        uiOptions.setUiConfigEndpoint(VIEWER_CONFIG_ENDPOINT);
-                    })
-                    .setupGroupDocsViewerApi(apiOptions -> {
-                        apiOptions.setApiEndpoint(VIEWER_API_ENDPOINT);
-                    })
-                    .setupLocalStorage(Paths.get("/home/user/files"));
+            _viewerEndpointHandler = ServletsViewerEndpointHandler
+                .setupGroupDocsViewer((viewerConfig, config) -> {
+                    viewerConfig.setViewerType(ViewerType.PNG);
+	
+                    config.setPreloadPageCount(2);
+                    config.setBaseUrl("http://127.0.0.1:8080");
+                })
+	
+                .setupGroupDocsViewerUI(uiOptions -> {
+                    uiOptions.setUiPath(VIEWER_UI_PATH);
+                    uiOptions.setUiConfigEndpoint(VIEWER_CONFIG_ENDPOINT);
+                })
+                .setupGroupDocsViewerApi(apiOptions -> {
+                    apiOptions.setApiEndpoint(VIEWER_API_ENDPOINT);
+                })
+                .setupLocalStorage(Paths.get("/home/liosha/workspace/groupdocs/files/"))
+                .setupInMemoryCache(inMemoryCacheConfig -> {
+                    inMemoryCacheConfig.setGroupCacheEntriesByFile(false);
+                    inMemoryCacheConfig.setCacheEntryExpirationTimeoutMinutes(3);
+                })
+    //			.setupLocalCache(cacheConfig -> {
+    //				cacheConfig.setCachePath(Paths.get("/home/liosha/workspace/groupdocs/files/cache"));
+    //			})
+            ;
         }
-    
+	
         @Bean
-        public CommonEndpointMapper commonEndpointMapper() {
-            return commonEndpointMapper;
+        public ServletsViewerEndpointHandler viewerEndpointMapper() {
+            return _viewerEndpointHandler;
         }
     }
     ```
 
-2. Create a controller that will handle viewer requests
+3. Create a controller that will handle viewer requests
 
-    ```java
+   ```java
     @Controller
-    class ViewerController {
-    
-        private final CommonEndpointMapper _endpointMapper;
-    
-        public ViewerController(CommonEndpointMapper endpointMapper) {
-            this._endpointMapper = endpointMapper;
-        }
-    
-        @GetMapping({ViewerConfiguration.VIEWER_UI_PATH, ViewerConfiguration.VIEWER_UI_PATH + "/**",
-            ViewerConfiguration.VIEWER_CONFIG_ENDPOINT, ViewerConfiguration.VIEWER_CONFIG_ENDPOINT + "/**"})
-        public void handleViewerUiRequest(HttpServletRequest request, HttpServletResponse response) {
-            handleViewerRequest(request, response);
-        }
-    
-        @PostMapping({ViewerConfiguration.VIEWER_API_ENDPOINT, ViewerConfiguration.VIEWER_API_ENDPOINT + "/**"})
-        public void handleViewerApiRequest(HttpServletRequest request, HttpServletResponse response) {
-            handleViewerRequest(request, response);
-        }
-    
-        private void handleViewerRequest(HttpServletRequest request, HttpServletResponse response) {
-            try (final ServletInputStream inputStream = request.getInputStream();
-                 final ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()) {
-                final int resultCode = this._endpointMapper.handleViewerRequest(request.getRequestURI(), inputStream,
-                    (headerName, headerValue) -> {
-                        response.setHeader(headerName, headerValue);
-                    }, arrayOutputStream);
-                response.setStatus(resultCode); // Must be set before writing to output stream
-                try (final ServletOutputStream outputStream = response.getOutputStream()) {
-                    outputStream.write(arrayOutputStream.toByteArray());
-                }
-            } catch (IOException e) {
-                // Handle exception
-                throw new RuntimeException(e);
-            }
-        }
+    public class ViewerController {
+		private final JakartaViewerEndpointHandler _viewerEndpointHandler;
+	
+		public ViewerController(JakartaViewerEndpointHandler endpointMapper) {
+			this._viewerEndpointHandler = endpointMapper;
+		}
+	
+		@GetMapping({ ViewerConfiguration.VIEWER_UI_PATH, ViewerConfiguration.VIEWER_UI_PATH + "/**",
+				ViewerConfiguration.VIEWER_CONFIG_ENDPOINT, ViewerConfiguration.VIEWER_CONFIG_ENDPOINT + "/**",
+				ViewerConfiguration.VIEWER_API_ENDPOINT, ViewerConfiguration.VIEWER_API_ENDPOINT + "/**" })
+		public void handleViewerUiRequest(HttpServletRequest request, HttpServletResponse response) {
+			this._viewerEndpointHandler.handleViewerRequest(request, response);
+		}
+	
+		@PostMapping({ ViewerConfiguration.VIEWER_API_ENDPOINT, ViewerConfiguration.VIEWER_API_ENDPOINT + "/**" })
+		public void handleViewerApiRequest(HttpServletRequest request, HttpServletResponse response) {
+			this._viewerEndpointHandler.handleViewerRequest(request, response);
+		}
     }
     ```
 

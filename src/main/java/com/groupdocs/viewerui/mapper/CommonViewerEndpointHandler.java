@@ -160,7 +160,7 @@ public class CommonViewerEndpointHandler {
     }
 
     public int handleViewerRequest(String requestUrl, String queryString, InputStream requestStream, HeaderAdder headerAdder, OutputStream responseStream) {
-        LOGGER.info("Handling Viewer request.");
+        LOGGER.info("Handling Viewer request: {}", requestUrl);
         LOGGER.debug("Request url: {}, query string: {}", requestUrl, queryString);
         try {
             final IActionNameDetector requestDetector = getRequestDetector();
