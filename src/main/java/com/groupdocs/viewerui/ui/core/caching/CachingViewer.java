@@ -6,13 +6,18 @@ import com.groupdocs.viewerui.ui.core.entities.DocumentInfo;
 import com.groupdocs.viewerui.ui.core.entities.FileCredentials;
 import com.groupdocs.viewerui.ui.core.entities.Page;
 import com.groupdocs.viewerui.ui.core.entities.PageResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CachingViewer implements IViewer {
-    private static final Map<String, Object> _fileLocks = new WeakHashMap<>();
+    private static final Logger LOGGER = LoggerFactory.getLogger(CachingViewer.class);
+    private static final Map<String, WeakReference<Object>> _fileLocks = new ConcurrentHashMap<>();
     private final IViewer _viewer;
     private final FileCache _fileCache;
 
@@ -28,8 +33,10 @@ public class CachingViewer implements IViewer {
     }
 
     private static synchronized Object getFileLock(String filename) {
-        // Get or create a lock object for the filename
-        return _fileLocks.computeIfAbsent(filename, k -> new Object());
+        return _fileLocks.computeIfAbsent(filename, k -> {
+            Object lock = new Object();
+            return new WeakReference<>(lock);
+        }).get(); // Retrieve the actual lock object
     }
 
     public String getPageExtension() {
@@ -135,8 +142,9 @@ public class CachingViewer implements IViewer {
 
     private List<Page> createPages(FileCredentials fileCredentials, int[] pageNumbers) {
         List<Page>[] pages = new List[1];
-        synchronizedBlock(fileCredentials.getFilePath(), () -> {
-            List<CachedPage> pagesOrNulls = getPagesOrNullsFromCache(fileCredentials.getFilePath(), pageNumbers);
+        final String filePath = fileCredentials.getFilePath();
+        synchronizedBlock(filePath, () -> {
+            List<CachedPage> pagesOrNulls = getPagesOrNullsFromCache(filePath, pageNumbers);
             int[] missingPageNumbers = getMissingPageNumbers(pagesOrNulls.stream());
 
             if (missingPageNumbers.length == 0) {
@@ -146,10 +154,9 @@ public class CachingViewer implements IViewer {
 
             List<Page> createdPages = _viewer.getPages(fileCredentials, missingPageNumbers);
 
-            saveToCache(fileCredentials.getFilePath(), createdPages.stream());
+            saveToCache(filePath, createdPages.stream());
 
             pages[0] = combine(pagesOrNulls.stream(), createdPages);
-
         });
         return pages[0];
     }
@@ -204,8 +211,13 @@ public class CachingViewer implements IViewer {
                 }).collect(Collectors.toList());
     }
 
+    private static void cleanupUnusedLocks() {
+        _fileLocks.entrySet().removeIf(entry -> entry.getValue().get() == null);
+    }
+
     @Override
     public void close() {
 //        _viewer.close();
+        cleanupUnusedLocks();
     }
 }
