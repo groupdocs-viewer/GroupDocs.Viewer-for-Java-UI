@@ -3,7 +3,6 @@ package com.groupdocs.viewerui.ui.api.controller;
 import com.groupdocs.viewerui.exception.ViewerUiException;
 import com.groupdocs.viewerui.ui.api.FileNameResolver;
 import com.groupdocs.viewerui.ui.api.SearchTermResolver;
-import com.groupdocs.viewerui.ui.api.UiConfigProvider;
 import com.groupdocs.viewerui.ui.api.infrastructure.ViewerActionResult;
 import com.groupdocs.viewerui.ui.api.models.*;
 import com.groupdocs.viewerui.ui.core.FileStorageProvider;
@@ -11,8 +10,8 @@ import com.groupdocs.viewerui.ui.core.IFileStorage;
 import com.groupdocs.viewerui.ui.core.IViewer;
 import com.groupdocs.viewerui.ui.core.configuration.Config;
 import com.groupdocs.viewerui.ui.core.entities.*;
+import com.groupdocs.viewerui.ui.core.extensions.StreamExtensions;
 import com.groupdocs.viewerui.ui.core.extensions.StringExtensions;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -260,7 +259,7 @@ public class ViewerController implements Closeable {
             return null;
         }
         try {
-            return IOUtils.toByteArray(inputStream);
+            return StreamExtensions.toByteArray(inputStream);
         } catch (IOException e) {
             throw new ViewerUiException("Can't read stream!", e);
         }
@@ -269,7 +268,7 @@ public class ViewerController implements Closeable {
     private byte[] downloadFile(String url) {
         try {
             final URL urlClient = new URL(url);
-            return IOUtils.toByteArray(urlClient.openStream());
+            return StreamExtensions.toByteArray(urlClient.openStream());
         } catch (Exception e) {
             throw new ViewerUiException("Can't download file!", e);
         }

@@ -4,9 +4,9 @@ import com.groupdocs.viewerui.exception.ViewerUiException;
 import com.groupdocs.viewerui.ui.api.cache.FileCache;
 import com.groupdocs.viewerui.ui.core.cache.local.config.LocalCacheConfig;
 import com.groupdocs.viewerui.ui.core.extensions.FilesExtensions;
+import com.groupdocs.viewerui.ui.core.extensions.StreamExtensions;
 import com.groupdocs.viewerui.ui.core.serialize.ISerializer;
 import com.groupdocs.viewerui.ui.core.serialize.JacksonJsonSerializer;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,7 +110,7 @@ public class LocalFileCache implements FileCache {
 
         Path cacheFilePath = getCacheFilePath(cacheKey, filePath);
         try (final OutputStream outputStream = createOutputStream(cacheFilePath)) {
-            IOUtils.write(value, outputStream);
+            outputStream.write(value);
         } catch (IOException e) {
             LOGGER.error("Exception throws while saving byte array to local file cache: cacheKey={}, filePath={}", cacheKey, filePath, e);
             throw new ViewerUiException(e);
@@ -122,16 +122,16 @@ public class LocalFileCache implements FileCache {
      *
      * @param cacheKey An unique identifier for the cache entry.
      * @param filePath The relative or absolute filepath.
-     * @param value    The stream to serialize.
+     * @param inputStream    The stream to serialize.
      */
-    public void set(String cacheKey, String filePath, InputStream value) {
-        if (value == null) {
+    public void set(String cacheKey, String filePath, InputStream inputStream) {
+        if (inputStream == null) {
             return;
         }
 
         Path cacheFilePath = getCacheFilePath(cacheKey, filePath);
         try (final OutputStream outputStream = createOutputStream(cacheFilePath)) {
-            IOUtils.copy(value, outputStream);
+            outputStream.write(StreamExtensions.toByteArray(inputStream));
         } catch (IOException e) {
             LOGGER.error("Exception throws while saving stream to local file cache: cacheKey={}, filePath={}", cacheKey, filePath, e);
             throw new ViewerUiException(e);

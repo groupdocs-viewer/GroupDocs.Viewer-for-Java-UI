@@ -20,14 +20,13 @@ import com.groupdocs.viewerui.ui.core.entities.HtmlPage;
 import com.groupdocs.viewerui.ui.core.entities.Page;
 import com.groupdocs.viewerui.ui.core.entities.PageResource;
 import com.groupdocs.viewerui.ui.core.extensions.CopyExtensions;
+import com.groupdocs.viewerui.ui.core.extensions.UrlExtensions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -104,7 +103,7 @@ public class HtmlWithExternalResourcesViewer extends BaseViewer {
         public MemoryPageStreamFactory(String basePath, String actionName, String filePath) {
             _basePath = basePath;
             _actionName = actionName;
-            _filePath = URLEncoder.encode(filePath, StandardCharsets.UTF_8);
+            _filePath = UrlExtensions.encode(filePath);
             _pageContents = new PageContents();
         }
 

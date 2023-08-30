@@ -2,10 +2,11 @@ package com.groupdocs.viewerui.ui.core;
 
 import com.groupdocs.viewerui.Keys;
 import com.groupdocs.viewerui.exception.ViewerUiException;
-import org.apache.commons.io.IOUtils;
+import com.groupdocs.viewerui.ui.core.extensions.StreamExtensions;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.FileNameMap;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
@@ -25,8 +26,7 @@ public class UiEmbeddedResourcesReader implements IUiResourcesReader {
 			}
 			FileNameMap fileNameMap = URLConnection.getFileNameMap();
 			String mimeType = fileNameMap.getContentTypeFor(resourceName);
-
-			final String resourceContent = IOUtils.toString(resourceAsStream, StandardCharsets.UTF_8);
+			final String resourceContent = new String(StreamExtensions.toByteArray(resourceAsStream), StandardCharsets.UTF_8);
 			return UiResource.create(resourceName, resourceContent, mimeType);
 		}
 	}

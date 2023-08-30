@@ -4,7 +4,7 @@ import com.groupdocs.viewerui.exception.ViewerUiException;
 import com.groupdocs.viewerui.ui.core.IFileStorage;
 import com.groupdocs.viewerui.ui.core.entities.FileSystemEntry;
 import com.groupdocs.viewerui.ui.core.extensions.FilesExtensions;
-import org.apache.commons.io.IOUtils;
+import com.groupdocs.viewerui.ui.core.extensions.StreamExtensions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +64,7 @@ public class LocalFileStorage implements IFileStorage {
     public byte[] readFile(String filePath) {
         Path fullPath = _storagePath.resolve(filePath);
         try (InputStream fs = createInputStream(fullPath)) {
-            return IOUtils.toByteArray(fs);
+            return StreamExtensions.toByteArray(fs);
         } catch (IOException | InterruptedException e) {
             LOGGER.error("Exception throws while reading a file: filePath={}", filePath, e);
             throw new ViewerUiException(e);

@@ -30,7 +30,6 @@ import com.groupdocs.viewerui.ui.core.extensions.StringExtensions;
 import com.groupdocs.viewerui.ui.core.extensions.UrlExtensions;
 import com.groupdocs.viewerui.ui.core.serialize.ISerializer;
 import com.groupdocs.viewerui.ui.core.serialize.JacksonJsonSerializer;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +46,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class CommonViewerEndpointHandler {
-    public static final String CONTENT_TYPE = "Content-Type";
+    private static final String CONTENT_TYPE = "Content-Type";
     private static final Logger LOGGER = LoggerFactory.getLogger(CommonViewerEndpointHandler.class);
     private UiOptions _uiOptions = new UiOptions();
 
@@ -69,18 +68,22 @@ public class CommonViewerEndpointHandler {
     private ViewerFactory _viewerFactory;
     private ViewerControllerFactory _viewerControllerFactory;
 
-    private CommonViewerEndpointHandler() {
+    protected CommonViewerEndpointHandler() {
     }
 
     public static CommonViewerEndpointHandler setupGroupDocsViewer(BiConsumer<ViewerConfig, Config> configConsumer) {
         final CommonViewerEndpointHandler commonViewerEndpointHandler = new CommonViewerEndpointHandler();
-        final ViewerConfig viewerConfig = commonViewerEndpointHandler.getViewerConfig();
-        final Config config = commonViewerEndpointHandler.getConfig();
+        return setupGroupDocsViewer(commonViewerEndpointHandler, configConsumer);
+    }
+
+    public static <T extends CommonViewerEndpointHandler> T setupGroupDocsViewer(T viewerEndpointHandler, BiConsumer<ViewerConfig, Config> configConsumer) {
+        final ViewerConfig viewerConfig = viewerEndpointHandler.getViewerConfig();
+        final Config config = viewerEndpointHandler.getConfig();
         configConsumer.accept(viewerConfig, config);
         // TODO: Some checks
         LOGGER.info("GroupDocs Viewer has been set up.");
         LOGGER.debug("Viewer config: {}, \nConfig: {}", viewerConfig, config);
-        return commonViewerEndpointHandler;
+        return viewerEndpointHandler;
     }
 
     public CommonViewerEndpointHandler setupGroupDocsViewerUI(Consumer<UiOptions> optionsConsumer) {
@@ -184,8 +187,7 @@ public class CommonViewerEndpointHandler {
         final ViewerFactory viewerFactory = getViewerFactory();
         final ViewerConfig viewerConfig = getViewerConfig();
         final ApiOptions apiOptions = getApiOptions();
-        final IViewer viewer = viewerFactory.createViewer(viewerConfig, apiOptions, () -> _fileStorage); // it
-        return viewer;
+        return viewerFactory.createViewer(viewerConfig, apiOptions, () -> _fileStorage); // it
     }
 
     public int handleViewerUploadRequest(InputStream submittedFileStream, String submittedFileName, boolean isRewrite, HeaderAdder headerAdder, OutputStream responseStream) {
@@ -211,7 +213,7 @@ public class CommonViewerEndpointHandler {
         headerAdder.addHeader(CONTENT_TYPE, uiResource.getContentType());
 
         final String content = uiResource.getContent();
-        IOUtils.write(content, responseStream, StandardCharsets.UTF_8);
+        responseStream.write(content.getBytes(StandardCharsets.UTF_8));
         responseStream.flush();
 
         return HttpURLConnection.HTTP_OK;
