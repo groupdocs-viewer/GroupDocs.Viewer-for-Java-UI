@@ -8,16 +8,15 @@ import com.groupdocs.viewer.options.ViewInfoOptions;
 import com.groupdocs.viewer.results.PdfViewInfo;
 import com.groupdocs.viewer.results.ViewInfo;
 import com.groupdocs.viewerui.exception.ViewerUiException;
-import com.groupdocs.viewerui.mapper.CommonViewerEndpointHandler;
-import com.groupdocs.viewerui.ui.configuration.ViewerConfig;
-import com.groupdocs.viewerui.ui.configuration.InternalCacheOptions;
 import com.groupdocs.viewerui.ui.api.FileTypeResolver;
 import com.groupdocs.viewerui.ui.api.internalcaching.InternalCache;
 import com.groupdocs.viewerui.ui.api.licensing.ViewerLicenser;
+import com.groupdocs.viewerui.ui.configuration.InternalCacheOptions;
+import com.groupdocs.viewerui.ui.configuration.ViewerConfig;
 import com.groupdocs.viewerui.ui.core.FileStorageProvider;
 import com.groupdocs.viewerui.ui.core.IFileStorage;
-import com.groupdocs.viewerui.ui.core.PageFormatter;
 import com.groupdocs.viewerui.ui.core.IViewer;
+import com.groupdocs.viewerui.ui.core.PageFormatter;
 import com.groupdocs.viewerui.ui.core.entities.DocumentInfo;
 import com.groupdocs.viewerui.ui.core.entities.FileCredentials;
 import com.groupdocs.viewerui.ui.core.entities.Page;
@@ -26,14 +25,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static com.groupdocs.viewerui.ui.core.extensions.CopyExtensions.copyPdfViewOptions;
 
 public abstract class BaseViewer implements IViewer {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BaseViewer.class);
+	private static final Map<String, WeakReference<Object>> _asyncLock = new ConcurrentHashMap<>();
 
 	private final ViewerConfig _viewerConfig;
 
@@ -146,31 +149,10 @@ public abstract class BaseViewer implements IViewer {
 		return viewOptions;
 	}
 
-	private Viewer initViewer(FileCredentials fileCredentials) {
-		if (_viewer != null) {
-			return _viewer;
+	private static void synchronizedBlock(String fileName, Runnable synchronizedBlock) {
+		synchronized (getFileLock(fileName)) {
+			synchronizedBlock.run();
 		}
-
-		_viewerLicenser.setLicense();
-
-		if (_internalCacheOptions.isCacheDisabled()) {
-			_viewer = createViewer(fileCredentials);
-			return _viewer;
-		}
-
-		// String key = "VI__" + fileCredentials.getFilePath();
-		// asyncLock.Lock(key) {
-		Viewer viewer = _viewerCache.get(fileCredentials);
-		if (viewer != null) {
-			_viewer = viewer;
-		}
-		else {
-			_viewer = createViewer(fileCredentials);
-			_viewerCache.set(fileCredentials, _viewer);
-		}
-		// }
-
-		return _viewer;
 	}
 
 	private Viewer createViewer(FileCredentials fileCredentials) {
@@ -212,6 +194,43 @@ public abstract class BaseViewer implements IViewer {
 		return page;
 	}
 
+	private static synchronized Object getFileLock(String filename) {
+		return _asyncLock.computeIfAbsent(filename, k -> {
+			Object lock = new Object();
+			return new WeakReference<>(lock);
+		}).get(); // Retrieve the actual lock object
+	}
+
+	private static void cleanupUnusedLocks() {
+		_asyncLock.entrySet().removeIf(entry -> entry.getValue().get() == null);
+	}
+
+	private Viewer initViewer(FileCredentials fileCredentials) {
+		if (_viewer != null) {
+			return _viewer;
+		}
+
+		_viewerLicenser.setLicense();
+
+		if (_internalCacheOptions.isCacheDisabled()) {
+			_viewer = createViewer(fileCredentials);
+			return _viewer;
+		}
+
+		String key = "VI__" + fileCredentials.getFilePath();
+		synchronizedBlock(key, () -> {
+			Viewer viewer = _viewerCache.get(fileCredentials);
+			if (viewer != null) {
+				_viewer = viewer;
+			} else {
+				_viewer = createViewer(fileCredentials);
+				_viewerCache.set(fileCredentials, _viewer);
+			}
+		});
+
+		return _viewer;
+	}
+
 	@Override
 	public void close() {
 		// NOTE: dispose when we're not going to reuse the object
@@ -221,6 +240,6 @@ public abstract class BaseViewer implements IViewer {
 				_viewer = null;
 			}
 		}
+		cleanupUnusedLocks();
 	}
-
 }

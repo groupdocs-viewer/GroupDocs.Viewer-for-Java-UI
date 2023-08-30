@@ -6,7 +6,6 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
-// TODO: Not tested at all
 public class DefaultMemoryCache implements MemoryCache {
     private final MemoryCacheOptions _memoryCacheOptions;
     private Map<String, CacheEntry> _cache = new ConcurrentHashMap<>();

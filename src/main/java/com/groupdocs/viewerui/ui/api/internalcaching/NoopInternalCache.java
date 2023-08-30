@@ -7,12 +7,10 @@ public class NoopInternalCache implements InternalCache {
 
 	@Override
 	public Viewer get(FileCredentials fileCredentials) {
-		throw new RuntimeException("Not implemented");
+		return null;
 	}
 
 	@Override
 	public void set(FileCredentials fileCredentials, Viewer entry) {
-		throw new RuntimeException("Not implemented");
 	}
-
 }

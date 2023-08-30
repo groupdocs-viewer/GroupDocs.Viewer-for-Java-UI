@@ -10,33 +10,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CachingViewer implements IViewer {
     private static final Logger LOGGER = LoggerFactory.getLogger(CachingViewer.class);
-    private static final Map<String, WeakReference<Object>> _fileLocks = new ConcurrentHashMap<>();
+    private static final Map<String, WeakReference<Object>> _asyncLock = new ConcurrentHashMap<>();
     private final IViewer _viewer;
     private final FileCache _fileCache;
 
     public CachingViewer(IViewer viewer, FileCache fileCache) {
         _viewer = viewer;
         _fileCache = fileCache;
-    }
-
-    private static void synchronizedBlock(String fileName, Runnable synchronizedBlock) {
-        synchronized (getFileLock(fileName)) {
-            synchronizedBlock.run();
-        }
-    }
-
-    private static synchronized Object getFileLock(String filename) {
-        return _fileLocks.computeIfAbsent(filename, k -> {
-            Object lock = new Object();
-            return new WeakReference<>(lock);
-        }).get(); // Retrieve the actual lock object
     }
 
     public String getPageExtension() {
@@ -211,8 +201,21 @@ public class CachingViewer implements IViewer {
                 }).collect(Collectors.toList());
     }
 
+    private static void synchronizedBlock(String fileName, Runnable synchronizedBlock) {
+        synchronized (getFileLock(fileName)) {
+            synchronizedBlock.run();
+        }
+    }
+
+    private static synchronized Object getFileLock(String filename) {
+        return _asyncLock.computeIfAbsent(filename, k -> {
+            Object lock = new Object();
+            return new WeakReference<>(lock);
+        }).get(); // Retrieve the actual lock object
+    }
+
     private static void cleanupUnusedLocks() {
-        _fileLocks.entrySet().removeIf(entry -> entry.getValue().get() == null);
+        _asyncLock.entrySet().removeIf(entry -> entry.getValue().get() == null);
     }
 
     @Override
