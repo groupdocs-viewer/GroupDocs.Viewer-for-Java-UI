@@ -1,5 +1,10 @@
 package com.groupdocs.viewerui.ui.core;
 
+/**
+ * Class ActionName represents a set of predefined actions (request types).
+ * Each action has a corresponding URL associated with it.
+ * @author liosha
+ */
 public enum ActionName {
     UI_RESOURCE("/"),
     LOAD_CONFIG("/viewer-config"),

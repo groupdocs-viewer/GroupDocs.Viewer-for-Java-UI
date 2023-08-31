@@ -3,6 +3,9 @@ package com.groupdocs.viewerui.ui.core;
 import com.groupdocs.viewerui.ui.core.configuration.Config;
 import com.groupdocs.viewerui.ui.core.entities.ConfigEntry;
 
+/**
+ * ConfigEntryFactory is responsible for creating ConfigEntry objects based on the provided Config object.
+ */
 public class ConfigEntryFactory implements IConfigEntryFactory {
 
     @Override

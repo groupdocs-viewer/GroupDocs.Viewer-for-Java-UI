@@ -72,7 +72,7 @@ User Interface for GroupDocs.Viewer for Java. API for easily integrating a docum
         }
 	
         @Bean
-        public ServletsViewerEndpointHandler viewerEndpointMapper() {
+        public ServletsViewerEndpointHandler viewerEndpointHandler() {
             return _viewerEndpointHandler;
         }
     }
@@ -85,8 +85,8 @@ User Interface for GroupDocs.Viewer for Java. API for easily integrating a docum
     public class ViewerController {
 		private final JakartaViewerEndpointHandler _viewerEndpointHandler;
 	
-		public ViewerController(JakartaViewerEndpointHandler endpointMapper) {
-			this._viewerEndpointHandler = endpointMapper;
+		public ViewerController(JakartaViewerEndpointHandler endpointHandler) {
+			this._viewerEndpointHandler = endpointHandler;
 		}
 	
 		@GetMapping({ ViewerConfiguration.VIEWER_UI_PATH, ViewerConfiguration.VIEWER_UI_PATH + "/**",

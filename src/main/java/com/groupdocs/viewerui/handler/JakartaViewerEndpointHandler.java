@@ -1,4 +1,4 @@
-package com.groupdocs.viewerui.mapper;
+package com.groupdocs.viewerui.handler;
 
 import com.groupdocs.viewerui.exception.ViewerUiException;
 import com.groupdocs.viewerui.ui.api.factory.ViewerControllerFactory;
@@ -27,12 +27,21 @@ import java.nio.file.Path;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+/**
+ * Endpoint handler for web applications which use Jakarta API
+ */
 public class JakartaViewerEndpointHandler extends CommonViewerEndpointHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(JakartaViewerEndpointHandler.class);
 
     protected JakartaViewerEndpointHandler() {
     }
 
+    /**
+     * Sets up the GroupDocs.Viewer for Java UI in common.
+     *
+     * @param configConsumer a consumer that accepts a ViewerConfig and a Config object to apply the configuration settings.
+     * @return a reference to `this` object.
+     */
     public static JakartaViewerEndpointHandler setupGroupDocsViewer(BiConsumer<ViewerConfig, Config> configConsumer) {
         return CommonViewerEndpointHandler.setupGroupDocsViewer(new JakartaViewerEndpointHandler(), configConsumer);
     }
@@ -62,10 +71,18 @@ public class JakartaViewerEndpointHandler extends CommonViewerEndpointHandler {
         return (JakartaViewerEndpointHandler) super.setupLocalCache(cacheConfigConsumer);
     }
 
+    @Override
     public JakartaViewerEndpointHandler setupInMemoryCache(Consumer<InMemoryCacheConfig> cacheConfigConsumer) {
         return (JakartaViewerEndpointHandler) super.setupInMemoryCache(cacheConfigConsumer);
     }
 
+    /**
+     * Handles a viewer request by determining the action to be performed based on the request URL and executing the corresponding handler.
+     *
+     * @param servletRequest  the http servlet request from Jakarta API.
+     * @param servletResponse the http servlet response from Jakarta API.
+     * @throws ViewerUiException if an error occurs while handling the viewer request.
+     */
     public void handleViewerRequest(HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
         final String requestUrl = servletRequest.getRequestURI();
         final String queryString = servletRequest.getQueryString();

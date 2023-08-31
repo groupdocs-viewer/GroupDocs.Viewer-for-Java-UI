@@ -1,4 +1,4 @@
-package com.groupdocs.viewerui.mapper;
+package com.groupdocs.viewerui.handler;
 
 import com.groupdocs.viewerui.Keys;
 import com.groupdocs.viewerui.exception.ViewerUiException;
@@ -45,6 +45,9 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+/**
+ * Endpoint handler for specific cases when neither Servlets not Jakarta API are not used in an application.
+ */
 public class CommonViewerEndpointHandler {
     private static final String CONTENT_TYPE = "Content-Type";
     private static final Logger LOGGER = LoggerFactory.getLogger(CommonViewerEndpointHandler.class);
@@ -71,6 +74,12 @@ public class CommonViewerEndpointHandler {
     protected CommonViewerEndpointHandler() {
     }
 
+    /**
+     * Sets up the GroupDocs.Viewer for Java UI in common.
+     *
+     * @param configConsumer a consumer that accepts a ViewerConfig and a Config object to apply the configuration settings.
+     * @return a reference to `this` object.
+     */
     public static CommonViewerEndpointHandler setupGroupDocsViewer(BiConsumer<ViewerConfig, Config> configConsumer) {
         final CommonViewerEndpointHandler commonViewerEndpointHandler = new CommonViewerEndpointHandler();
         return setupGroupDocsViewer(commonViewerEndpointHandler, configConsumer);
@@ -86,6 +95,13 @@ public class CommonViewerEndpointHandler {
         return viewerEndpointHandler;
     }
 
+    /**
+     * Sets up the GroupDocs.Viewer UI by configuring UI specific options.
+     *
+     * @param optionsConsumer a Consumer that accepts a UiOptions object to apply the configuration settings.
+     * @return a reference to `this` object.
+     * @throws IllegalArgumentException if the path to the UI is null or does not start with '/' character.
+     */
     public CommonViewerEndpointHandler setupGroupDocsViewerUI(Consumer<UiOptions> optionsConsumer) {
         final UiOptions uiOptions = getUiOptions();
         optionsConsumer.accept(uiOptions);
@@ -100,6 +116,12 @@ public class CommonViewerEndpointHandler {
         return this;
     }
 
+    /**
+     * Sets up the GroupDocs.Viewer API by configuring API specific options.
+     *
+     * @param optionsConsumer a Consumer that accepts an ApiOptions object to apply the configuration settings.
+     * @return a reference to `this` object.
+     */
     public CommonViewerEndpointHandler setupGroupDocsViewerApi(Consumer<ApiOptions> optionsConsumer) {
         setupGroupDocsViewerApi(optionsConsumer, new DefaultViewerFactory(), new DefaultViewerControllerFactory());
         return this;
@@ -126,6 +148,12 @@ public class CommonViewerEndpointHandler {
         return this;
     }
 
+    /**
+     * Sets up the local storage for GroupDocs.Viewer by specifying the storage path.
+     *
+     * @param storagePath the path where the files will be stored locally.
+     * @return a reference to `this` object.
+     */
     public CommonViewerEndpointHandler setupLocalStorage(Path storagePath) {
         _fileStorage = new LocalFileStorage(storagePath);
         LOGGER.info("GroupDocs Viewer local storage has been set up.");
@@ -133,6 +161,12 @@ public class CommonViewerEndpointHandler {
         return this;
     }
 
+    /**
+     * Sets up the local cache for GroupDocs.Viewer by using a consumer that accepts an LocalCacheConfig object to apply the cache settings.
+     *
+     * @param cacheConfigConsumer a consumer function that configures the cache using a LocalCacheConfig object.
+     * @return a reference to `this` object.
+     */
     public CommonViewerEndpointHandler setupLocalCache(Consumer<LocalCacheConfig> cacheConfigConsumer) {
         final LocalCacheConfig cacheConfig = new LocalCacheConfig();
         cacheConfigConsumer.accept(cacheConfig);
@@ -146,6 +180,12 @@ public class CommonViewerEndpointHandler {
         return this;
     }
 
+    /**
+     * Sets up the in-memory cache for GroupDocs.Viewer by using a consumer that accepts an InMemoryCacheConfig object to apply the cache settings.
+     *
+     * @param cacheConfigConsumer a consumer function that configures the cache using an InMemoryCacheConfig object.
+     * @return a reference to `this` object.
+     */
     public CommonViewerEndpointHandler setupInMemoryCache(Consumer<InMemoryCacheConfig> cacheConfigConsumer) {
         final InMemoryCacheConfig cacheConfig = new InMemoryCacheConfig();
         cacheConfigConsumer.accept(cacheConfig);
@@ -159,6 +199,17 @@ public class CommonViewerEndpointHandler {
         return this;
     }
 
+    /**
+     * Handles a viewer request by determining the action to be performed based on the request URL and executing the corresponding handler.
+     *
+     * @param requestUrl      the URL of the viewer request.
+     * @param queryString     the query string of the viewer request.
+     * @param requestStream   the input stream of the viewer request.
+     * @param headerAdder     the object which will be used to add response headers.
+     * @param responseStream  the output stream for the viewer response.
+     * @return the HTTP status code indicating the result of the viewer request.
+     * @throws ViewerUiException if an error occurs while handling the viewer request.
+     */
     public int handleViewerRequest(String requestUrl, String queryString, InputStream requestStream, HeaderAdder headerAdder, OutputStream responseStream) {
         LOGGER.info("Handling Viewer request: {}", requestUrl);
         LOGGER.debug("Request url: {}, query string: {}", requestUrl, queryString);
@@ -190,6 +241,17 @@ public class CommonViewerEndpointHandler {
         return viewerFactory.createViewer(viewerConfig, apiOptions, () -> _fileStorage); // it
     }
 
+    /**
+     * Handles a viewer upload request by uploading a document and returning the result.
+     *
+     * @param submittedFileStream    the input stream containing the submitted file.
+     * @param submittedFileName      the name of the submitted file.
+     * @param isRewrite              a flag indicating whether the file should be overwritten if it already exists.
+     * @param headerAdder            the object which will be used to add response headers.
+     * @param responseStream         the output stream for the viewer response.
+     * @return the HTTP status code indicating the result of the viewer upload request.
+     * @throws ViewerUiException     if an error occurs while handling the viewer upload request.
+     */
     public int handleViewerUploadRequest(InputStream submittedFileStream, String submittedFileName, boolean isRewrite, HeaderAdder headerAdder, OutputStream responseStream) {
         final ViewerControllerFactory viewerControllerFactory = getViewerControllerFactory();
         final IViewer viewer = createViewer();
@@ -514,6 +576,12 @@ public class CommonViewerEndpointHandler {
         this._viewerControllerFactory = viewerControllerFactory;
     }
 
+    /**
+     * Checks if the given request URL is an upload request so that you will know which handler should be used ({@link #handleViewerRequest(String, String, InputStream, HeaderAdder, OutputStream)} or {@link #handleViewerUploadRequest(InputStream, String, boolean, HeaderAdder, OutputStream)}).
+     *
+     * @param requestUrl the URL of the request to be checked.
+     * @return true if the request is an upload request, false otherwise.
+     */
     public boolean isUploadRequest(String requestUrl) {
         final IActionNameDetector requestDetector = getRequestDetector();
         final ActionName actionName = requestDetector.detectActionName(requestUrl);
