@@ -52,7 +52,7 @@
         <dependency>
             <groupId>com.groupdocs</groupId>
             <artifactId>groupdocs-viewer</artifactId>
-            <version>${project.version}</version>
+            <version>23.7</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
