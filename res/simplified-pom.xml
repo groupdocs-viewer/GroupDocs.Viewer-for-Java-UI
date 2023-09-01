@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.groupdocs</groupId>
+    <artifactId>groupdocs-viewer-ui</artifactId>
+    <name>GroupDocs.Viewer for Java User Interface</name>
+    <url>https://github.com/groupdocs-viewer/GroupDocs.Viewer-for-Java-UI</url>
+    <version>23.7</version>
+    <description>
+        GroupDocs.Viewer UI is a rich UI interface that designed to work in conjunction with GroupDocs.Viewer for Java to display most popular file and document formats in a browser.
+        To integrate GroupDocs.Viewer UI in your Java project you just need to configure Viewer API and handle requests using specific endpoint handler provided in GroupDocs.Viewer.UI.
+    </description>
+
+    <developers>
+        <developer>
+            <id>groupdocs</id>
+            <name>Marketplace Team</name>
+            <email>support@groupdocs.com</email>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://github.com/groupdocs-viewer/GroupDocs.Viewer-for-Java-UI/blob/master/LICENSE</url>
+        </license>
+    </licenses>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.groupdocs</groupId>
+            <artifactId>groupdocs-viewer</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>5.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.13.4.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.13.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.32</version>
+        </dependency>
+    </dependencies>
+
+    <repositories>
+        <repository>
+            <id>GroupDocs Artifact Repository</id>
+            <url>https://releases.groupdocs.com/java/repo</url>
+        </repository>
+        <repository>
+            <id>default-maven-repository</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
+    </repositories>
+</project>
