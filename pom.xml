@@ -36,6 +36,7 @@
         <java.version>1.8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
+        <https.protocols>TLSv1.2</https.protocols>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <verbose>true</verbose>
 
@@ -158,17 +159,6 @@
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-deploy-plugin</artifactId>
-                        <configuration>
-                            <!--<url>file:///C:/m2-repo</url>-->
-                            <repositoryId>groupdocs-s3-repo-ci-qa</repositoryId>
-                            <url>${distributionManagement.repository.url}</url>
-                            <detail>${verbose}</detail>
-                            <retryFailedDeploymentCount>3</retryFailedDeploymentCount>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jarsigner-plugin</artifactId>
                         <version>1.4</version>
                         <executions>
@@ -238,22 +228,25 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-deploy-plugin</artifactId>
                         <version>2.8.2</version>
+<!--                        <version>3.1.1</version>-->
                         <executions>
                             <execution>
                                 <id>default-deploy</id>
                                 <phase>deploy</phase>
                                 <goals>
                                     <goal>deploy</goal>
-                                    <goal>deploy-file</goal>
                                 </goals>
                             </execution>
                         </executions>
-                    <configuration>
-                        <javadoc>${project.build.directory}/${project.build.finalName}-javadoc.jar</javadoc>
-                        <file>${project.build.directory}/${project.build.finalName}.jar</file>
-                        <pomFile>res/simplified-pom.xml</pomFile>
-                        <packaging>jar</packaging>
-                    </configuration>
+                        <configuration>
+                            <!--<url>file:///C:/m2-repo</url>-->
+                            <repositoryId>groupdocs-s3-repo-ci</repositoryId>
+                            <url>${project.distributionManagement.repository.url}</url>
+                            <detail>${verbose}</detail>
+                            <retryFailedDeploymentCount>3</retryFailedDeploymentCount>
+                            <pomFile>res/simplified-pom.xml</pomFile>
+                            <packaging>jar</packaging>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
@@ -262,7 +255,7 @@
 
     <distributionManagement>
         <repository>
-            <id>groupdocs-s3-repo-ci-qa</id>
+            <id>groupdocs-s3-repo-ci</id>
             <name>Artifact Repository QA</name>
             <url>${distribution.url}</url>
         </repository>
