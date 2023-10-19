@@ -155,9 +155,10 @@ public class CommonViewerEndpointHandler {
      * @return a reference to `this` object.
      */
     public CommonViewerEndpointHandler setupLocalStorage(Path storagePath) {
-        _fileStorage = new LocalFileStorage(storagePath);
+        final Path absoluteLocalStoragePath = storagePath.toAbsolutePath();
+        _fileStorage = new LocalFileStorage(absoluteLocalStoragePath);
         LOGGER.info("GroupDocs Viewer local storage has been set up.");
-        LOGGER.debug("Local storage path: {}", storagePath);
+        LOGGER.debug("Local storage path: {}", absoluteLocalStoragePath);
         return this;
     }
 

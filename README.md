@@ -3,7 +3,19 @@ User Interface for GroupDocs.Viewer for Java. API for easily integrating a docum
 
 ## How to use with Spring
 
-1. Add required dependencies
+1. Add GroupDocs Maven repository
+
+   ```xml
+       <repositories>
+           <repository>
+               <id>releases.groupdocs.com</id>
+               <name>releases.groupdocs</name>
+               <url>https://releases.groupdocs.com/java/repo/</url>
+           </repository>
+       </repositories>
+   ```
+
+2. Add required dependencies
    ```xml
     <dependencies>
       <dependency>
@@ -30,57 +42,57 @@ User Interface for GroupDocs.Viewer for Java. API for easily integrating a docum
     </dependencies>
    ```
 
-2. Configure GroupDocs.Viewer UI
+3. Configure GroupDocs.Viewer UI
 
     ```java
-    @Configuration
-    public class ViewerConfiguration {
-        public static final String VIEWER_UI_PATH = "/viewer";
-	
-        public static final String VIEWER_CONFIG_ENDPOINT = "/viewer-config";
-	
-        public static final String VIEWER_API_ENDPOINT = "/viewer-api";
-	
-        private ServletsViewerEndpointHandler _viewerEndpointHandler;
-	
-        @PostConstruct
-        public void init() {
-            _viewerEndpointHandler = ServletsViewerEndpointHandler
-                .setupGroupDocsViewer((viewerConfig, config) -> {
-                    viewerConfig.setViewerType(ViewerType.PNG);
-	
-                    config.setPreloadPageCount(2);
-                    config.setBaseUrl("http://127.0.0.1:8080");
-                })
-	
-                .setupGroupDocsViewerUI(uiOptions -> {
-                    uiOptions.setUiPath(VIEWER_UI_PATH);
-                    uiOptions.setUiConfigEndpoint(VIEWER_CONFIG_ENDPOINT);
-                })
-                .setupGroupDocsViewerApi(apiOptions -> {
-                    apiOptions.setApiEndpoint(VIEWER_API_ENDPOINT);
-                })
-                .setupLocalStorage(Paths.get("/home/liosha/workspace/groupdocs/files/"))
-                .setupInMemoryCache(inMemoryCacheConfig -> {
-                    inMemoryCacheConfig.setGroupCacheEntriesByFile(false);
-                    inMemoryCacheConfig.setCacheEntryExpirationTimeoutMinutes(3);
-                })
-    //			.setupLocalCache(cacheConfig -> {
-    //				cacheConfig.setCachePath(Paths.get("/home/liosha/workspace/groupdocs/files/cache"));
-    //			})
-            ;
-        }
-	
-        @Bean
-        public ServletsViewerEndpointHandler viewerEndpointHandler() {
-            return _viewerEndpointHandler;
-        }
-    }
+   @Configuration
+   public class ViewerConfiguration {
+   public static final String VIEWER_UI_PATH = "/viewer";
+   
+       public static final String VIEWER_CONFIG_ENDPOINT = "/viewer-config";
+   
+       public static final String VIEWER_API_ENDPOINT = "/viewer-api";
+   
+       private JakartaViewerEndpointHandler _viewerEndpointHandler;
+   
+       @PostConstruct
+       public void init() {
+           _viewerEndpointHandler = JakartaViewerEndpointHandler
+                   .setupGroupDocsViewer((viewerConfig, config) -> {
+                       viewerConfig.setViewerType(ViewerType.PNG);
+   
+                       config.setPreloadPageCount(2);
+                       config.setBaseUrl("http://127.0.0.1:8080");
+                   })
+   
+                   .setupGroupDocsViewerUI(uiOptions -> {
+                       uiOptions.setUiPath(VIEWER_UI_PATH);
+                       uiOptions.setUiConfigEndpoint(VIEWER_CONFIG_ENDPOINT);
+                   })
+                   .setupGroupDocsViewerApi(apiOptions -> {
+                       apiOptions.setApiEndpoint(VIEWER_API_ENDPOINT);
+                   })
+                   .setupLocalStorage(Paths.get("./").toAbsolutePath())
+                   .setupInMemoryCache(inMemoryCacheConfig -> {
+                       inMemoryCacheConfig.setGroupCacheEntriesByFile(false);
+                       inMemoryCacheConfig.setCacheEntryExpirationTimeoutMinutes(3);
+                   })
+       //			.setupLocalCache(cacheConfig -> {
+       //				cacheConfig.setCachePath(Paths.get("/home/user/cache"));
+       //			})
+           ;
+       }
+   
+       @Bean
+       public JakartaViewerEndpointHandler viewerEndpointHandler() {
+           return _viewerEndpointHandler;
+       }
+   }
     ```
 
-3. Create a controller that will handle viewer requests
+4. Create a controller that will handle viewer requests
 
-   ```java
+    ```java
     @Controller
     public class ViewerController {
 		private final JakartaViewerEndpointHandler _viewerEndpointHandler;
@@ -103,4 +115,56 @@ User Interface for GroupDocs.Viewer for Java. API for easily integrating a docum
     }
     ```
 
-3. Run application and open `http://127.0.0.1:8080/viewer` (`/viewer` part is from `VIEWER_UI_PATH`)
+5. Run application and open `http://127.0.0.1:8080/viewer` (`/viewer` part is from `VIEWER_UI_PATH`)
+
+Optionally you can enable logging by adding `logback.xml` file to `src/main/resources` directory. Example of the file:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+	<property name="LOGS" value="./logs" />
+
+	<appender name="Console"
+			  class="ch.qos.logback.core.ConsoleAppender">
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<Pattern>
+				%black(%d{ISO8601}) %highlight(%-5level) [%blue(%t)] %yellow(%C{1}): %msg%n%throwable
+			</Pattern>
+		</layout>
+	</appender>
+
+	<appender name="RollingFile"
+			  class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${LOGS}/spring-boot-logger.log</file>
+		<encoder
+			class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<Pattern>%d %p %C{1} [%t] %m%n</Pattern>
+		</encoder>
+
+		<rollingPolicy
+			class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- rollover daily and when the file reaches 10 MegaBytes -->
+			<fileNamePattern>${LOGS}/archived/spring-boot-logger-%d{yyyy-MM-dd}.%i.log
+			</fileNamePattern>
+			<timeBasedFileNamingAndTriggeringPolicy
+				class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+				<maxFileSize>10MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+		</rollingPolicy>
+	</appender>
+
+	<!-- LOG everything at INFO level -->
+	<root level="info">
+		<appender-ref ref="RollingFile" />
+		<appender-ref ref="Console" />
+	</root>
+
+	<!-- LOG "com.baeldung*" at TRACE level -->
+	<logger name="com.groupdocs" level="debug" additivity="false">
+		<appender-ref ref="RollingFile" />
+		<appender-ref ref="Console" />
+	</logger>
+
+</configuration>
+```
