@@ -2,9 +2,17 @@ package com.example.groupdocsviewerjavauispringboot;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+@RestController
 @SpringBootApplication
 public class DemoApplication {
+
+	@RequestMapping("/")
+	String home() {
+		return "<html><body><p>groupdocs-viewer-java-ui-spring-boot</p><p><a href=\"/viewer/\">Open GroupDocs.Viewer page</a></p><body/></html>";
+	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(DemoApplication.class, args);
