@@ -196,7 +196,8 @@ public abstract class BaseViewer implements IViewer {
 
 	private static synchronized Object getFileLock(String filename) {
 		final Object lock = new Object();
-		return _asyncLock.computeIfAbsent(filename, k -> new WeakReference<>(lock)).get(); // Retrieve the actual lock object
+		final Object actualLock = _asyncLock.computeIfAbsent(filename, k -> new WeakReference<>(lock)).get();// Retrieve the actual lock object
+		return actualLock == null ? lock : actualLock;
 	}
 
 	private static void cleanupUnusedLocks() {
