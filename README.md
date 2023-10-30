@@ -168,3 +168,13 @@ Optionally you can enable logging by adding `logback.xml` file to `src/main/reso
 
 </configuration>
 ```
+
+## Developer notes
+
+In case of getting next error
+
+```shell
+error: error reading /home/jenkins/groupdocs-viewer.jar; Unsupported size: 19732345 for JarEntry META-INF/MANIFEST.MF. Allowed max size: 8000000 bytes
+```
+
+Create environment variables `MAVEN_OPTS`, `JAVA_OPTS` or `JAVA_TOOL_OPTIONS` with value `-Djdk.jar.maxSignatureFileSize=25000000`. Which variable to use depends on your project and way you run it.
