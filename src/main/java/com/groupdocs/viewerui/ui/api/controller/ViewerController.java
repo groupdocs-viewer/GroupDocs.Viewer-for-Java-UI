@@ -22,6 +22,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -97,7 +98,7 @@ public class ViewerController implements Closeable {
 
             return okJsonResult(result);
         } catch (Exception e) {
-            if (e.getMessage() != null && e.getMessage().contains("password")) {
+            if (e.getMessage() != null && e.getMessage().toLowerCase(Locale.ROOT).contains("password")) {
                 String message = request.getPassword() == null || request.getPassword().isEmpty() ? "Password Required"
                         : "Incorrect Password";
 
@@ -185,7 +186,7 @@ public class ViewerController implements Closeable {
 
             return new ViewerActionResult("application/pdf", HttpURLConnection.HTTP_OK, new FileResponse(pdfFileBytes, pdfFileName));
         } catch (Exception e) {
-            if (e.getMessage() != null && e.getMessage().contains("password")) {
+            if (e.getMessage() != null && e.getMessage().toLowerCase(Locale.ROOT).contains("password")) {
                 String message = request.getPassword() == null || request.getPassword().isEmpty() ? "Password Required" : "Incorrect Password";
 
                 return forbiddenJsonResult(message);
@@ -217,7 +218,7 @@ public class ViewerController implements Closeable {
 
             return okJsonResult(pageContents);
         } catch (Exception e) {
-            if (e.getMessage() != null && e.getMessage().contains("password")) {
+            if (e.getMessage() != null && e.getMessage().toLowerCase(Locale.ROOT).contains("password")) {
                 String message = request.getPassword() == null || request.getPassword().isEmpty() ? "Password Required"
                         : "Incorrect Password";
 
@@ -238,7 +239,7 @@ public class ViewerController implements Closeable {
 
             return okJsonResult(pageContent);
         } catch (Exception ex) {
-            if (ex.getMessage() != null && ex.getMessage().contains("password")) {
+            if (ex.getMessage() != null && ex.getMessage().toLowerCase(Locale.ROOT).contains("password")) {
                 String message = request.getPassword() == null || request.getPassword().isEmpty() ? "Password Required"
                         : "Incorrect Password";
 

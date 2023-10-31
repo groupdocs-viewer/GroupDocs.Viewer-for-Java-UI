@@ -6,7 +6,7 @@
     <artifactId>groupdocs-viewer-ui</artifactId>
     <name>GroupDocs.Viewer for Java User Interface</name>
     <url>https://github.com/groupdocs-viewer/GroupDocs.Viewer-for-Java-UI</url>
-    <version>23.7.1</version>
+    <version>23.7.2</version>
     <description>
         GroupDocs.Viewer UI is a rich UI interface that designed to work in conjunction with GroupDocs.Viewer for Java to display most popular file and document formats in a browser.
         To integrate GroupDocs.Viewer UI in your Java project you just need to configure Viewer API and handle requests using specific endpoint handler provided in GroupDocs.Viewer.UI.

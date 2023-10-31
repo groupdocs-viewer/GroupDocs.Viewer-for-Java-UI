@@ -21,7 +21,7 @@ User Interface for GroupDocs.Viewer for Java. API for easily integrating a docum
       <dependency>
         <groupId>com.groupdocs</groupId>
         <artifactId>groupdocs-viewer-ui</artifactId>
-        <version>23.7.1</version>
+        <version>23.7.2</version>
       </dependency>
 
       <dependency>
