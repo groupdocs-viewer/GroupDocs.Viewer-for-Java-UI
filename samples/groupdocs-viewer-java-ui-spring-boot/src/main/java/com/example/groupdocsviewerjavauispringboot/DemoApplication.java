@@ -20,8 +20,8 @@ public class DemoApplication {
 	}
 
 	@RequestMapping("/")
-	String home() {
-		return "<html><body><p>groupdocs-viewer-java-ui-spring-boot</p><p><a href=\"/viewer/\">Open GroupDocs.Viewer page</a></p><body/></html>";
+	public String home(HttpServletRequest request) {
+		return "<html><body><p>groupdocs-viewer-java-ui-spring-boot</p><p><a href=\"" + request.getContextPath() + "/viewer/\">Open GroupDocs.Viewer page</a></p><body/></html>";
 	}
 
 	@GetMapping({ ViewerConfiguration.VIEWER_UI_PATH, ViewerConfiguration.VIEWER_UI_PATH + "/**",

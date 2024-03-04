@@ -23,6 +23,7 @@ public class ViewerConfiguration {
         _viewerEndpointHandler = JakartaViewerEndpointHandler
                 .setupGroupDocsViewer((viewerConfig, config) -> {
                     viewerConfig.setViewerType(ViewerType.PNG);
+//                    viewerConfig.setLicensePath("GroupDocs.Viewer.Product.Family.lic");
 
                     config.setPreloadPageCount(2);
                     config.setBaseUrl("http://localhost:8080");
