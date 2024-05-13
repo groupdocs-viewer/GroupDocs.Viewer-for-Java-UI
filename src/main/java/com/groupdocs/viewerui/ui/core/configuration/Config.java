@@ -266,6 +266,9 @@ public class Config {
 	}
 
 	public Config setPreloadPageCount(int countPages) {
+		if (countPages < 0) {
+			throw new IllegalArgumentException("Specified page count '" + countPages + "' is negative, which is prohibited");
+		}
 		_preloadPageCount = countPages;
 		return this;
 	}
