@@ -1,6 +1,7 @@
 package com.groupdocs.viewerui.handler;
 
 import com.groupdocs.viewerui.exception.ViewerUiException;
+import com.groupdocs.viewerui.ui.api.awss3.storage.AwsS3Options;
 import com.groupdocs.viewerui.ui.api.factory.ViewerControllerFactory;
 import com.groupdocs.viewerui.ui.api.factory.ViewerFactory;
 import com.groupdocs.viewerui.ui.configuration.ApiOptions;
@@ -64,6 +65,11 @@ public class JakartaViewerEndpointHandler extends CommonViewerEndpointHandler {
     @Override
     public JakartaViewerEndpointHandler setupLocalStorage(Path storagePath) {
         return (JakartaViewerEndpointHandler) super.setupLocalStorage(storagePath);
+    }
+
+    @Override
+    public JakartaViewerEndpointHandler setupAwsS3Storage(Consumer<AwsS3Options> storageConfigConsumer) {
+        return (JakartaViewerEndpointHandler) super.setupAwsS3Storage(storageConfigConsumer);
     }
 
     @Override

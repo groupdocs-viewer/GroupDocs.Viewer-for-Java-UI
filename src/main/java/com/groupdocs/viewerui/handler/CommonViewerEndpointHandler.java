@@ -5,6 +5,8 @@ import com.groupdocs.viewerui.exception.ViewerUiException;
 import com.groupdocs.viewerui.function.HeaderAdder;
 import com.groupdocs.viewerui.ui.api.UiConfigProvider;
 import com.groupdocs.viewerui.ui.api.UiConfigProviderFactory;
+import com.groupdocs.viewerui.ui.api.awss3.storage.AwsS3FileStorage;
+import com.groupdocs.viewerui.ui.api.awss3.storage.AwsS3Options;
 import com.groupdocs.viewerui.ui.api.cache.FileCacheFactory;
 import com.groupdocs.viewerui.ui.api.controller.ViewerController;
 import com.groupdocs.viewerui.ui.api.factory.DefaultViewerControllerFactory;
@@ -67,7 +69,7 @@ public class CommonViewerEndpointHandler {
     private IActionNameDetector _requestDetector;
 
     private ISerializer _serializer;
-    private LocalFileStorage _fileStorage;
+    private IFileStorage _fileStorage;
     private ViewerFactory _viewerFactory;
     private ViewerControllerFactory _viewerControllerFactory;
 
@@ -159,6 +161,21 @@ public class CommonViewerEndpointHandler {
         _fileStorage = new LocalFileStorage(absoluteLocalStoragePath);
         LOGGER.info("GroupDocs Viewer local storage has been set up.");
         LOGGER.debug("Local storage path: {}", absoluteLocalStoragePath);
+        return this;
+    }
+
+    /**
+     * Sets up the AWS S3 storage for GroupDocs.Viewer by using a consumer that accepts an AwsS3Options object to apply the storage settings.
+     *
+     * @param storageConfigConsumer a consumer function that configures the AWS S3 storage using a AwsS3Options object.
+     * @return a reference to `this` object.
+     */
+    public CommonViewerEndpointHandler setupAwsS3Storage(Consumer<AwsS3Options> storageConfigConsumer) {
+        final AwsS3Options awsS3Options = new AwsS3Options();
+        storageConfigConsumer.accept(awsS3Options);
+        _fileStorage = new AwsS3FileStorage(awsS3Options);
+        LOGGER.info("GroupDocs Viewer AWS S3 storage has been set up.");
+        LOGGER.debug("AWS S3 storage options: {}", awsS3Options);
         return this;
     }
 
@@ -553,7 +570,7 @@ public class CommonViewerEndpointHandler {
         this._viewerConfig = viewerConfig;
     }
 
-    public LocalFileStorage getFileStorage() {
+    public IFileStorage getFileStorage() {
         return _fileStorage;
     }
 

@@ -1,6 +1,7 @@
 package com.groupdocs.viewerui.handler;
 
 import com.groupdocs.viewerui.exception.ViewerUiException;
+import com.groupdocs.viewerui.ui.api.awss3.storage.AwsS3Options;
 import com.groupdocs.viewerui.ui.api.factory.ViewerControllerFactory;
 import com.groupdocs.viewerui.ui.api.factory.ViewerFactory;
 import com.groupdocs.viewerui.ui.configuration.ApiOptions;
@@ -65,6 +66,11 @@ public class ServletsViewerEndpointHandler extends CommonViewerEndpointHandler {
     @Override
     public ServletsViewerEndpointHandler setupLocalStorage(Path storagePath) {
         return (ServletsViewerEndpointHandler) super.setupLocalStorage(storagePath);
+    }
+
+    @Override
+    public ServletsViewerEndpointHandler setupAwsS3Storage(Consumer<AwsS3Options> storageConfigConsumer) {
+        return (ServletsViewerEndpointHandler) super.setupAwsS3Storage(storageConfigConsumer);
     }
 
     @Override
