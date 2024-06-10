@@ -16,6 +16,9 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * Represents a local file cache that allows storing and retrieving data using keys. The data is stored on the local disk.
+ */
 public class LocalFileCache implements FileCache {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LocalFileCache.class);
@@ -26,15 +29,12 @@ public class LocalFileCache implements FileCache {
     /**
      * Creates new instance of {@link LocalFileCache} class.
      *
-     * @param cacheConfig
-     * @throws IllegalArgumentException Thrown when {@code ISerializer} is null.
+     * @param serializer  Serializer to be used for serialization/deserialization of the cache entries. Default value is {@link JacksonJsonSerializer}.
+     * @param cacheConfig Configuration for the cache.
      * @throws IllegalArgumentException Thrown when {@code cacheConfig} is null.
      * @throws IllegalStateException    Thrown when {@link  LocalCacheConfig#getCachePath()} is null.
      */
-    public LocalFileCache(ISerializer ISerializer, LocalCacheConfig cacheConfig) {
-        if (ISerializer == null) {
-            throw new IllegalArgumentException("ISerializer");
-        }
+    public LocalFileCache(ISerializer serializer, LocalCacheConfig cacheConfig) {
         if (cacheConfig == null) {
             throw new IllegalArgumentException("cacheConfig");
         }
@@ -43,14 +43,14 @@ public class LocalFileCache implements FileCache {
             throw new IllegalStateException("cachePath is null");
         }
 
-        _serializer = ISerializer;
+        _serializer = serializer;
         _cachePath = cachePath;
     }
 
     /**
-     * The relative or absolute path to the cache folder.
+     * Returns the relative or absolute path to the cache folder.
      *
-     * @return path to the cache folder
+     * @return the path to the cache folder
      */
     public Path getCachePath() {
         return _cachePath;
@@ -80,11 +80,11 @@ public class LocalFileCache implements FileCache {
     }
 
     /**
-     * Deserializes data associated with this key if present.
+     * Retrieves and deserializes data associated with the given cache key and file path if present.
      *
-     * @param cacheKey A key identifying the requested entry.
+     * @param cacheKey An unique identifier for the cache entry.
      * @param filePath The relative or absolute filepath.
-     * @return the object or null
+     * @return the object or null if not found in the cache.
      */
     public <T> T get(String cacheKey, String filePath, Class<T> clazz) {
         Path cacheFilePath = getCacheFilePath(cacheKey, filePath);
@@ -97,11 +97,11 @@ public class LocalFileCache implements FileCache {
     }
 
     /**
-     * Serializes data to the local disk.
+     * Saves a byte array to the local disk using the specified cache key and file path.
      *
      * @param cacheKey An unique identifier for the cache entry.
      * @param filePath The relative or absolute filepath.
-     * @param value    The byte array to serialize.
+     * @param value    The byte array to save. If null, the method returns without doing anything.
      */
     public void set(String cacheKey, String filePath, byte[] value) {
         if (value == null) {
@@ -118,11 +118,11 @@ public class LocalFileCache implements FileCache {
     }
 
     /**
-     * Serializes data to the local disk.
+     * Serializes data from an input stream to the local disk.
      *
-     * @param cacheKey An unique identifier for the cache entry.
-     * @param filePath The relative or absolute filepath.
-     * @param inputStream    The stream to serialize.
+     * @param cacheKey    An unique identifier for the cache entry.
+     * @param filePath    The relative or absolute filepath.
+     * @param inputStream The stream to serialize and save to the cache. If null, the method returns without doing anything.
      */
     public void set(String cacheKey, String filePath, InputStream inputStream) {
         if (inputStream == null) {
@@ -139,11 +139,11 @@ public class LocalFileCache implements FileCache {
     }
 
     /**
-     * Serializes data to the local disk.
+     * Serializes an object to the local disk.
      *
      * @param cacheKey An unique identifier for the cache entry.
      * @param filePath The relative or absolute filepath.
-     * @param value    The object to serialize.
+     * @param value    The object to serialize and save to the cache. If null, the method returns without doing anything.
      */
     public void set(String cacheKey, String filePath, Object value) {
         if (value == null) {
@@ -175,7 +175,7 @@ public class LocalFileCache implements FileCache {
             }
         } catch (Exception e) {
 
-            LOGGER.debug("Can't deserealize local file cache entry: cachePath={}, clazz={}", cachePath, clazz, e);
+            LOGGER.debug("Can't deserialize local file cache entry: cachePath={}, clazz={}", cachePath, clazz, e);
         }
 
         return data;

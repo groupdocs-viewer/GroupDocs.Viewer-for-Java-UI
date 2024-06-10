@@ -5,8 +5,9 @@ import com.groupdocs.viewerui.exception.ViewerUiException;
 import com.groupdocs.viewerui.function.HeaderAdder;
 import com.groupdocs.viewerui.ui.api.UiConfigProvider;
 import com.groupdocs.viewerui.ui.api.UiConfigProviderFactory;
+import com.groupdocs.viewerui.ui.api.awss3.AwsS3Options;
+import com.groupdocs.viewerui.ui.api.awss3.cache.AwsS3FileCache;
 import com.groupdocs.viewerui.ui.api.awss3.storage.AwsS3FileStorage;
-import com.groupdocs.viewerui.ui.api.awss3.storage.AwsS3Options;
 import com.groupdocs.viewerui.ui.api.cache.FileCacheFactory;
 import com.groupdocs.viewerui.ui.api.controller.ViewerController;
 import com.groupdocs.viewerui.ui.api.factory.DefaultViewerControllerFactory;
@@ -213,6 +214,25 @@ public class CommonViewerEndpointHandler {
             return new InMemoryFileCache(memoryCache, cacheConfig);
         });
         LOGGER.info("GroupDocs Viewer im-memory cache has been set up.");
+        LOGGER.debug("Cache config: {}, is previous cache setup replaced: {}", cacheConfig, supplierPresent);
+        return this;
+    }
+
+    /**
+     * Sets up the AWS S3 cache for GroupDocs.Viewer by using a consumer that accepts an {@link AwsS3Options} object to apply the cache settings.
+     *
+     * @param cacheConfigConsumer a consumer function that configures the cache using a {@link AwsS3Options} object.
+     * @return a reference to `this` object.
+     */
+    public CommonViewerEndpointHandler setupAwsS3Cache(Consumer<AwsS3Options> cacheConfigConsumer) {
+        final AwsS3Options cacheConfig = new AwsS3Options();
+        cacheConfigConsumer.accept(cacheConfig);
+        final boolean supplierPresent = FileCacheFactory.isSupplierPresent();
+        FileCacheFactory.setSupplier(() -> {
+            final ISerializer serializer = getSerializer();
+            return new AwsS3FileCache(cacheConfig, serializer);
+        });
+        LOGGER.info("GroupDocs Viewer AWS S3 cache has been set up.");
         LOGGER.debug("Cache config: {}, is previous cache setup replaced: {}", cacheConfig, supplierPresent);
         return this;
     }

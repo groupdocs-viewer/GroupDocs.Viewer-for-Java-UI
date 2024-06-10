@@ -1,8 +1,6 @@
 package com.example.groupdocsviewerjavauispringboot;
 
 import com.groupdocs.viewerui.handler.JakartaViewerEndpointHandler;
-import com.groupdocs.viewerui.ui.api.awss3.storage.AwsS3FileStorage;
-import com.groupdocs.viewerui.ui.api.awss3.storage.AwsS3Options;
 import com.groupdocs.viewerui.ui.core.ViewerType;
 import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Bean;
@@ -49,6 +47,12 @@ public class ViewerConfiguration {
                     inMemoryCacheConfig.setGroupCacheEntriesByFile(false);
                     inMemoryCacheConfig.setCacheEntryExpirationTimeoutMinutes(3);
                 })
+//                .setupAwsS3Cache(awsS3Options -> {
+//                    awsS3Options.setAccessKey("AccessKey");
+//                    awsS3Options.setSecretKey("SecretKey");
+//                    awsS3Options.setRegion("us-east-1");
+//                    awsS3Options.setBucketName("BucketName");
+//                });
         //			.setupLocalCache(cacheConfig -> {
         //				cacheConfig.setCachePath(Paths.get("/home/liosha/workspace/groupdocs/files/cache"));
         //			})

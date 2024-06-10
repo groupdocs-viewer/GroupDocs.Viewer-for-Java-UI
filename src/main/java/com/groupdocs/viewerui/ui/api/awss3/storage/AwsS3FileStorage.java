@@ -10,6 +10,7 @@ import com.amazonaws.services.s3.model.*;
 import com.amazonaws.util.IOUtils;
 import com.amazonaws.util.StringUtils;
 import com.groupdocs.viewerui.exception.ViewerUiException;
+import com.groupdocs.viewerui.ui.api.awss3.AwsS3Options;
 import com.groupdocs.viewerui.ui.core.IFileStorage;
 import com.groupdocs.viewerui.ui.core.entities.FileSystemEntry;
 import org.slf4j.Logger;
@@ -113,14 +114,10 @@ public class AwsS3FileStorage implements IFileStorage {
         GetObjectRequest request = new GetObjectRequest(bucketName, filePath);
         try (S3Object object = s3Client.getObject(request)) {
             return IOUtils.toByteArray(object.getObjectContent());
-        } catch (AmazonServiceException e) {
-            // Handle S3 exceptions
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (AmazonServiceException | IOException e) {
             LOGGER.error("Exception throws while reading files: filePath={}", filePath, e);
             throw new ViewerUiException(e);
         }
-        return null;
     }
 
     @Override

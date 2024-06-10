@@ -1,7 +1,7 @@
 package com.groupdocs.viewerui.handler;
 
 import com.groupdocs.viewerui.exception.ViewerUiException;
-import com.groupdocs.viewerui.ui.api.awss3.storage.AwsS3Options;
+import com.groupdocs.viewerui.ui.api.awss3.AwsS3Options;
 import com.groupdocs.viewerui.ui.api.factory.ViewerControllerFactory;
 import com.groupdocs.viewerui.ui.api.factory.ViewerFactory;
 import com.groupdocs.viewerui.ui.configuration.ApiOptions;
@@ -80,6 +80,11 @@ public class JakartaViewerEndpointHandler extends CommonViewerEndpointHandler {
     @Override
     public JakartaViewerEndpointHandler setupInMemoryCache(Consumer<InMemoryCacheConfig> cacheConfigConsumer) {
         return (JakartaViewerEndpointHandler) super.setupInMemoryCache(cacheConfigConsumer);
+    }
+
+    @Override
+    public JakartaViewerEndpointHandler setupAwsS3Cache(Consumer<AwsS3Options> cacheConfigConsumer) {
+        return (JakartaViewerEndpointHandler) super.setupAwsS3Cache(cacheConfigConsumer);
     }
 
     /**

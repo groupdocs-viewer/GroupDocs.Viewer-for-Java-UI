@@ -1,4 +1,4 @@
-package com.groupdocs.viewerui.ui.api.awss3.storage;
+package com.groupdocs.viewerui.ui.api.awss3;
 
 import com.amazonaws.ClientConfiguration;
 
