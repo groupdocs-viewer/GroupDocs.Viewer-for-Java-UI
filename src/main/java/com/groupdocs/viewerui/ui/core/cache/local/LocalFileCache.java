@@ -18,6 +18,7 @@ import java.nio.file.Path;
 
 /**
  * Represents a local file cache that allows storing and retrieving data using keys. The data is stored on the local disk.
+ * This class provides methods to put, get, and remove cached items from the local storage based on their unique keys.
  */
 public class LocalFileCache implements FileCache {
 
@@ -27,12 +28,12 @@ public class LocalFileCache implements FileCache {
     private long _waitTimeout = 100L;
 
     /**
-     * Creates new instance of {@link LocalFileCache} class.
+     * Creates a new instance of {@link LocalFileCache} class.
      *
-     * @param serializer  Serializer to be used for serialization/deserialization of the cache entries. Default value is {@link JacksonJsonSerializer}.
-     * @param cacheConfig Configuration for the cache.
-     * @throws IllegalArgumentException Thrown when {@code cacheConfig} is null.
-     * @throws IllegalStateException    Thrown when {@link  LocalCacheConfig#getCachePath()} is null.
+     * @param serializer  The serializer to be used for serialization/deserialization of the cache entries. Default value is {@link JacksonJsonSerializer}.
+     * @param cacheConfig Configuration for the cache. It must not be null and must provide a valid cache path.
+     * @throws IllegalArgumentException Thrown if {@code cacheConfig} is null or if the cache path provided in {@code cacheConfig} is null.
+     * @throws IllegalStateException    Thrown if the cache path provided in {@code cacheConfig} is not accessible.
      */
     public LocalFileCache(ISerializer serializer, LocalCacheConfig cacheConfig) {
         if (cacheConfig == null) {
@@ -56,18 +57,29 @@ public class LocalFileCache implements FileCache {
         return _cachePath;
     }
 
+    /**
+     * Sets the new value for the relative or absolute path to the cache folder.
+     *
+     * @param cachePath The new path to be set as the cache path.
+     */
     public void setCachePath(Path cachePath) {
         this._cachePath = cachePath;
     }
 
-    public long getWaitTimeout() {
-        return _waitTimeout;
-    }
-
+    /**
+     * Sets the wait timeout for get operations on the local file cache. This specifies how long to wait when retrieving items from the cache, in milliseconds.
+     * If set to a value greater than 0, {@link LocalFileCache#get(String, String, Class)} will block until the item is available or the operation times out.
+     * Default value is 100 milliseconds.
+     * @param waitTimeout The new wait timeout for get operations on the local file cache in milliseconds. If set to a value less than or equal to 0, there is no waiting time.
+     */
     public void setWaitTimeout(long waitTimeout) {
         this._waitTimeout = waitTimeout;
     }
 
+    /**
+     * Returns the serializer used for serialization/deserialization of cache entries.
+     * @return The instance of {@link ISerializer} that is used to serialize and deserialize cache entries.
+     */
     public ISerializer getSerializer() {
         if (this._serializer == null) {
             _serializer = new JacksonJsonSerializer();
@@ -75,17 +87,25 @@ public class LocalFileCache implements FileCache {
         return _serializer;
     }
 
+    /**
+     * Sets the serializer used for serialization/deserialization of cache entries.
+     * @param serializer The instance of {@link ISerializer} that is to be set as the new serializer. If null, it will use {@link JacksonJsonSerializer}.
+     */
     public void setSerializer(ISerializer serializer) {
         this._serializer = serializer;
     }
 
-    /**
-     * Retrieves and deserializes data associated with the given cache key and file path if present.
-     *
-     * @param cacheKey An unique identifier for the cache entry.
-     * @param filePath The relative or absolute filepath.
-     * @return the object or null if not found in the cache.
-     */
+      /**
+         * Retrieves and deserializes data associated with the given cache key and file path if present.
+         * <p>
+         * This method will block for a maximum of {@link LocalFileCache#setWaitTimeout(long)} milliseconds while waiting for an item to become available in the cache.
+         * If no item is found within this time, the method returns null.
+         * </p>
+         * @param cacheKey  An unique identifier for the cache entry.
+         * @param filePath  The relative or absolute filepath.
+         * @param clazz     The class type of the object to be deserialized from the cache.
+         * @return          The deserialized object or null if not found in the cache.
+         */
     public <T> T get(String cacheKey, String filePath, Class<T> clazz) {
         Path cacheFilePath = getCacheFilePath(cacheKey, filePath);
 
@@ -117,13 +137,15 @@ public class LocalFileCache implements FileCache {
         }
     }
 
-    /**
-     * Serializes data from an input stream to the local disk.
-     *
-     * @param cacheKey    An unique identifier for the cache entry.
-     * @param filePath    The relative or absolute filepath.
-     * @param inputStream The stream to serialize and save to the cache. If null, the method returns without doing anything.
-     */
+      /**
+         * Serializes data from an input stream to the local disk using a specified serializer.
+         * <p>
+         * This method will use the {@link LocalFileCache#getSerializer()} to serialize the data before writing it to the cache file.
+         * </p>
+         * @param cacheKey    An unique identifier for the cache entry.
+         * @param filePath    The relative or absolute filepath.
+         * @param inputStream The stream to serialize and save to the cache. If null, the method returns without doing anything.
+         */
     public void set(String cacheKey, String filePath, InputStream inputStream) {
         if (inputStream == null) {
             return;

@@ -8,6 +8,9 @@ import com.groupdocs.viewerui.ui.api.UiConfigProviderFactory;
 import com.groupdocs.viewerui.ui.api.awss3.AwsS3Options;
 import com.groupdocs.viewerui.ui.api.awss3.cache.AwsS3FileCache;
 import com.groupdocs.viewerui.ui.api.awss3.storage.AwsS3FileStorage;
+import com.groupdocs.viewerui.ui.api.azure.AzureBlobOptions;
+import com.groupdocs.viewerui.ui.api.azure.cache.AzureBlobFileCache;
+import com.groupdocs.viewerui.ui.api.azure.storage.AzureBlobFileStorage;
 import com.groupdocs.viewerui.ui.api.cache.FileCacheFactory;
 import com.groupdocs.viewerui.ui.api.controller.ViewerController;
 import com.groupdocs.viewerui.ui.api.factory.DefaultViewerControllerFactory;
@@ -88,6 +91,13 @@ public class CommonViewerEndpointHandler {
         return setupGroupDocsViewer(commonViewerEndpointHandler, configConsumer);
     }
 
+    /**
+     * Sets up the GroupDocs.Viewer for Java UI in common using a provided consumer to configure the ViewerConfig and Config objects.
+     *
+     * @param viewerEndpointHandler The instance of CommonViewerEndpointHandler to which the configuration will be applied.
+     * @param configConsumer        A consumer that accepts a ViewerConfig and a Config object to configure GroupDocs.Viewer.
+     * @return The provided CommonViewerEndpointHandler instance with the configured settings applied.
+     */
     public static <T extends CommonViewerEndpointHandler> T setupGroupDocsViewer(T viewerEndpointHandler, BiConsumer<ViewerConfig, Config> configConsumer) {
         final ViewerConfig viewerConfig = viewerEndpointHandler.getViewerConfig();
         final Config config = viewerEndpointHandler.getConfig();
@@ -130,6 +140,14 @@ public class CommonViewerEndpointHandler {
         return this;
     }
 
+    /**
+     * Sets up the GroupDocs.Viewer API by configuring API specific options.
+     *
+     * @param optionsConsumer         a Consumer that accepts an ApiOptions object to apply the configuration settings.
+     * @param viewerFactory           The factory for creating Viewer instances.
+     * @param viewerControllerFactory The factory for creating ViewerController instances.
+     * @return a reference to `this` object.
+     */
     public CommonViewerEndpointHandler setupGroupDocsViewerApi(Consumer<ApiOptions> optionsConsumer, ViewerFactory viewerFactory, ViewerControllerFactory viewerControllerFactory) {
         final ApiOptions apiOptions = getApiOptions();
         optionsConsumer.accept(apiOptions);
@@ -177,6 +195,21 @@ public class CommonViewerEndpointHandler {
         _fileStorage = new AwsS3FileStorage(awsS3Options);
         LOGGER.info("GroupDocs Viewer AWS S3 storage has been set up.");
         LOGGER.debug("AWS S3 storage options: {}", awsS3Options);
+        return this;
+    }
+
+    /**
+     * Sets up the Azure Blob Storage for GroupDocs.Viewer UI by using a consumer that accepts an AzureBlobOptions object to apply the storage settings.
+     *
+     * @param storageConfigConsumer a consumer function that configures the Azure Blob storage using an AzureBlobOptions object.
+     * @return a reference to `this` object.
+     */
+    public CommonViewerEndpointHandler setupAzureBlobStorage(Consumer<AzureBlobOptions> storageConfigConsumer) {
+        final AzureBlobOptions azureBlobOptions = new AzureBlobOptions();
+        storageConfigConsumer.accept(azureBlobOptions);
+        _fileStorage = new AzureBlobFileStorage(azureBlobOptions);
+        LOGGER.info("GroupDocs Viewer Azure Blob storage has been set up.");
+        LOGGER.debug("Azure Blob storage options: {}", azureBlobOptions);
         return this;
     }
 
@@ -238,13 +271,32 @@ public class CommonViewerEndpointHandler {
     }
 
     /**
+     * Sets up the AWS S3 cache for GroupDocs.Viewer by using a consumer that accepts an {@link AwsS3Options} object to apply the cache settings.
+     *
+     * @param cacheConfigConsumer a consumer function that configures the cache using a {@link AwsS3Options} object.
+     * @return a reference to `this` object.
+     */
+    public CommonViewerEndpointHandler setupAzureBlobCache(Consumer<AzureBlobOptions> cacheConfigConsumer) {
+        final AzureBlobOptions cacheConfig = new AzureBlobOptions();
+        cacheConfigConsumer.accept(cacheConfig);
+        final boolean supplierPresent = FileCacheFactory.isSupplierPresent();
+        FileCacheFactory.setSupplier(() -> {
+            final ISerializer serializer = getSerializer();
+            return new AzureBlobFileCache(cacheConfig, serializer);
+        });
+        LOGGER.info("GroupDocs Viewer AWS S3 cache has been set up.");
+        LOGGER.debug("Cache config: {}, is previous cache setup replaced: {}", cacheConfig, supplierPresent);
+        return this;
+    }
+
+    /**
      * Handles a viewer request by determining the action to be performed based on the request URL and executing the corresponding handler.
      *
-     * @param requestUrl      the URL of the viewer request.
-     * @param queryString     the query string of the viewer request.
-     * @param requestStream   the input stream of the viewer request.
-     * @param headerAdder     the object which will be used to add response headers.
-     * @param responseStream  the output stream for the viewer response.
+     * @param requestUrl     the URL of the viewer request.
+     * @param queryString    the query string of the viewer request.
+     * @param requestStream  the input stream of the viewer request.
+     * @param headerAdder    the object which will be used to add response headers.
+     * @param responseStream the output stream for the viewer response.
      * @return the HTTP status code indicating the result of the viewer request.
      * @throws ViewerUiException if an error occurs while handling the viewer request.
      */
@@ -282,13 +334,13 @@ public class CommonViewerEndpointHandler {
     /**
      * Handles a viewer upload request by uploading a document and returning the result.
      *
-     * @param submittedFileStream    the input stream containing the submitted file.
-     * @param submittedFileName      the name of the submitted file.
-     * @param isRewrite              a flag indicating whether the file should be overwritten if it already exists.
-     * @param headerAdder            the object which will be used to add response headers.
-     * @param responseStream         the output stream for the viewer response.
+     * @param submittedFileStream the input stream containing the submitted file.
+     * @param submittedFileName   the name of the submitted file.
+     * @param isRewrite           a flag indicating whether the file should be overwritten if it already exists.
+     * @param headerAdder         the object which will be used to add response headers.
+     * @param responseStream      the output stream for the viewer response.
      * @return the HTTP status code indicating the result of the viewer upload request.
-     * @throws ViewerUiException     if an error occurs while handling the viewer upload request.
+     * @throws ViewerUiException if an error occurs while handling the viewer upload request.
      */
     public int handleViewerUploadRequest(InputStream submittedFileStream, String submittedFileName, boolean isRewrite, HeaderAdder headerAdder, OutputStream responseStream) {
         final ViewerControllerFactory viewerControllerFactory = getViewerControllerFactory();

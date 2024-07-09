@@ -6,7 +6,7 @@
 
     <groupId>com.groupdocs</groupId>
     <artifactId>groupdocs-viewer-ui</artifactId>
-    <version>24.4</version>
+    <version>24.6</version>
     <packaging>jar</packaging>
 
     <name>GroupDocs.Viewer for Java User Interface</name>
@@ -54,7 +54,7 @@
         <dependency>
             <groupId>com.groupdocs</groupId>
             <artifactId>groupdocs-viewer</artifactId>
-            <version>24.4</version>
+            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -84,16 +84,28 @@
             <artifactId>slf4j-api</artifactId>
             <version>1.7.32</version>
         </dependency>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-core</artifactId>
-            <version>1.12.720</version>
-        </dependency>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-s3</artifactId>
-            <version>1.12.720</version>
-        </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>com.amazonaws</groupId>-->
+<!--            <artifactId>aws-java-sdk-core</artifactId>-->
+<!--            <version>1.12.720</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.amazonaws</groupId>-->
+<!--            <artifactId>aws-java-sdk-s3</artifactId>-->
+<!--            <version>1.12.720</version>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>com.azure</groupId>-->
+<!--            <artifactId>azure-storage-blob</artifactId>-->
+<!--            <version>12.26.1</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.azure</groupId>-->
+<!--            <artifactId>azure-identity</artifactId>-->
+<!--            <version>1.13.0</version>-->
+<!--        </dependency>-->
     </dependencies>
 
     <build>

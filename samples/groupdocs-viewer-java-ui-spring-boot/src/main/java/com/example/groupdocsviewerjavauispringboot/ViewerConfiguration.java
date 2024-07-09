@@ -42,6 +42,11 @@ public class ViewerConfiguration {
 //                    awsS3Options.setRegion("us-east-1");
 //                    awsS3Options.setBucketName("BucketName");
 //                })
+//                .setupAzureBlobStorage(azureBlobOptions -> {
+//                    azureBlobOptions.setAccountName("AccountName");
+//                    azureBlobOptions.setAccountKey("AccountKey");
+//                    azureBlobOptions.setContainerName("ContainerName");
+//                })
                 .setupLocalStorage(Paths.get("./files").toAbsolutePath())
                 .setupInMemoryCache(inMemoryCacheConfig -> {
                     inMemoryCacheConfig.setGroupCacheEntriesByFile(false);
@@ -53,9 +58,14 @@ public class ViewerConfiguration {
 //                    awsS3Options.setRegion("us-east-1");
 //                    awsS3Options.setBucketName("BucketName");
 //                });
-        //			.setupLocalCache(cacheConfig -> {
-        //				cacheConfig.setCachePath(Paths.get("/home/liosha/workspace/groupdocs/files/cache"));
-        //			})
+//                .setupAzureBlobStorageCache(azureBlobOptions -> {
+//                    azureBlobOptions.setAccountName("AccountName");
+//                    azureBlobOptions.setAccountKey("AccountKey");
+//                    azureBlobOptions.setContainerName("ContainerName");
+//                });
+//                .setupLocalCache(cacheConfig -> {
+//                    cacheConfig.setCachePath(Paths.get("/home/liosha/workspace/groupdocs/files/cache"));
+//                })
         ;
     }
 

@@ -2,6 +2,7 @@ package com.groupdocs.viewerui.handler;
 
 import com.groupdocs.viewerui.exception.ViewerUiException;
 import com.groupdocs.viewerui.ui.api.awss3.AwsS3Options;
+import com.groupdocs.viewerui.ui.api.azure.AzureBlobOptions;
 import com.groupdocs.viewerui.ui.api.factory.ViewerControllerFactory;
 import com.groupdocs.viewerui.ui.api.factory.ViewerFactory;
 import com.groupdocs.viewerui.ui.configuration.ApiOptions;
@@ -73,6 +74,11 @@ public class JakartaViewerEndpointHandler extends CommonViewerEndpointHandler {
     }
 
     @Override
+    public JakartaViewerEndpointHandler setupAzureBlobStorage(Consumer<AzureBlobOptions> storageConfigConsumer) {
+        return (JakartaViewerEndpointHandler) super.setupAzureBlobStorage(storageConfigConsumer);
+    }
+
+    @Override
     public JakartaViewerEndpointHandler setupLocalCache(Consumer<LocalCacheConfig> cacheConfigConsumer) {
         return (JakartaViewerEndpointHandler) super.setupLocalCache(cacheConfigConsumer);
     }
@@ -85,6 +91,11 @@ public class JakartaViewerEndpointHandler extends CommonViewerEndpointHandler {
     @Override
     public JakartaViewerEndpointHandler setupAwsS3Cache(Consumer<AwsS3Options> cacheConfigConsumer) {
         return (JakartaViewerEndpointHandler) super.setupAwsS3Cache(cacheConfigConsumer);
+    }
+
+    @Override
+    public JakartaViewerEndpointHandler setupAzureBlobCache(Consumer<AzureBlobOptions> cacheConfigConsumer) {
+        return (JakartaViewerEndpointHandler) super.setupAzureBlobCache(cacheConfigConsumer);
     }
 
     /**

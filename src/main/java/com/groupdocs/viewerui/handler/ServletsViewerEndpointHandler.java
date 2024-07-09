@@ -2,6 +2,7 @@ package com.groupdocs.viewerui.handler;
 
 import com.groupdocs.viewerui.exception.ViewerUiException;
 import com.groupdocs.viewerui.ui.api.awss3.AwsS3Options;
+import com.groupdocs.viewerui.ui.api.azure.AzureBlobOptions;
 import com.groupdocs.viewerui.ui.api.factory.ViewerControllerFactory;
 import com.groupdocs.viewerui.ui.api.factory.ViewerFactory;
 import com.groupdocs.viewerui.ui.configuration.ApiOptions;
@@ -74,6 +75,11 @@ public class ServletsViewerEndpointHandler extends CommonViewerEndpointHandler {
     }
 
     @Override
+    public ServletsViewerEndpointHandler setupAzureBlobStorage(Consumer<AzureBlobOptions> storageConfigConsumer) {
+        return (ServletsViewerEndpointHandler) super.setupAzureBlobStorage(storageConfigConsumer);
+    }
+
+    @Override
     public ServletsViewerEndpointHandler setupLocalCache(Consumer<LocalCacheConfig> cacheConfigConsumer) {
         return (ServletsViewerEndpointHandler) super.setupLocalCache(cacheConfigConsumer);
     }
@@ -86,6 +92,11 @@ public class ServletsViewerEndpointHandler extends CommonViewerEndpointHandler {
     @Override
     public ServletsViewerEndpointHandler setupAwsS3Cache(Consumer<AwsS3Options> cacheConfigConsumer) {
         return (ServletsViewerEndpointHandler) super.setupAwsS3Cache(cacheConfigConsumer);
+    }
+
+    @Override
+    public ServletsViewerEndpointHandler setupAzureBlobCache(Consumer<AzureBlobOptions> cacheConfigConsumer) {
+        return (ServletsViewerEndpointHandler) super.setupAzureBlobCache(cacheConfigConsumer);
     }
 
     /**

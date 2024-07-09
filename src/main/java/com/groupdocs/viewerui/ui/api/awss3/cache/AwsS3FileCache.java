@@ -131,6 +131,7 @@ public class AwsS3FileCache implements FileCache {
                                 LOGGER.debug("Cache entry expired: cacheKey=" + cacheKey + " filePath=" + filePath);
                                 // Delete S3 object
                                 getS3Client().deleteObject(getBucketName(), cacheFilePath);
+                                return null;
                             }
                         }
                     }
