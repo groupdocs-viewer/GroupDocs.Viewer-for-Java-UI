@@ -21,13 +21,13 @@ User Interface for GroupDocs.Viewer for Java. API for easily integrating a docum
       <dependency>
         <groupId>com.groupdocs</groupId>
         <artifactId>groupdocs-viewer-ui</artifactId>
-        <version>24.8</version>
+        <version>24.10</version>
       </dependency>
 
       <dependency>
         <groupId>com.groupdocs</groupId>
         <artifactId>groupdocs-viewer</artifactId>
-        <version>24.8</version>
+        <version>24.10</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
