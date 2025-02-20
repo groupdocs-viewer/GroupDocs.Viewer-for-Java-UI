@@ -4,14 +4,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class FileDescription {
 
-	@JsonProperty("guid")
-	private String _guid;
+	@JsonProperty("path")
+	private String _path;
 
 	@JsonProperty("name")
 	private String _name;
 
-	@JsonProperty("isDirectory")
-	private boolean _isDirectory;
+	@JsonProperty("isDir")
+	private boolean _isDir;
 
 	@JsonProperty("size")
 	private long _size;
@@ -19,19 +19,19 @@ public class FileDescription {
 	/**
 	 * .ctor
 	 */
-	public FileDescription(String guid, String name, boolean isDirectory, long size) {
-		_guid = guid;
+	public FileDescription(String path, String name, boolean isDirectory, long size) {
+		_path = path;
 		_name = name;
-		_isDirectory = isDirectory;
+		_isDir = isDirectory;
 		_size = size;
 	}
 
 	/**
 	 * File unique ID.
 	 */
-	// [JsonPropertyName("guid")]
-	public String getGuid() {
-		return _guid;
+	// [JsonPropertyName("path")]
+	public String getPath() {
+		return _path;
 	}
 
 	/**
@@ -46,8 +46,8 @@ public class FileDescription {
 	 * <value>True</value> when it instanceof a directory.
 	 */
 	// [JsonPropertyName("isDirectory")]
-	public boolean getIsDirectory() {
-		return _isDirectory;
+	public boolean getIsDir() {
+		return _isDir;
 	}
 
 	/**

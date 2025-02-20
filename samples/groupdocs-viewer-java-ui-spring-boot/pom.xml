@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.example</groupId>
 	<artifactId>groupdocs-viewer-java-ui-spring-boot</artifactId>
-	<version>24.12</version>
+	<version>24.12.1</version>
 	<name>demo</name>
 	<description>Demo project for Spring Boot</description>
 	<properties>
@@ -37,7 +37,7 @@
 		<dependency>
 			<groupId>com.groupdocs</groupId>
 			<artifactId>groupdocs-viewer</artifactId>
-			<version>${project.version}</version>
+			<version>24.12</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
@@ -49,6 +49,7 @@
 			<artifactId>jackson-annotations</artifactId>
 			<version>2.13.3</version>
 		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -57,6 +58,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+
 		</plugins>
 	</build>
 
@@ -65,6 +67,10 @@
 			<id>releases.groupdocs.com</id>
 			<name>releases.groupdocs</name>
 			<url>https://releases.groupdocs.com/java/repo/</url>
+		</repository>
+		<repository>
+			<id>default-maven-repository</id>
+			<url>https://repo.maven.apache.org/maven2</url>
 		</repository>
 	</repositories>
 

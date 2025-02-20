@@ -10,6 +10,9 @@ public class ViewerActionResult {
 	@JsonProperty("contentType")
 	private String _contentType;
 
+	@JsonProperty("contentLength")
+	private long _contentLength;
+
 	@JsonProperty("statusCode")
 	private int _statusCode;
 
@@ -21,7 +24,12 @@ public class ViewerActionResult {
 	}
 
 	public ViewerActionResult(String contentType, int statusCode, Object value) {
+		this(contentType, -1, statusCode, value);
+	}
+
+	public ViewerActionResult(String contentType, long contentLength, int statusCode, Object value) {
 		this._contentType = contentType;
+		this._contentLength = contentLength;
 		this._statusCode = statusCode;
 		this._value = value;
 	}
@@ -32,6 +40,14 @@ public class ViewerActionResult {
 
 	public void setContentType(String contentType) {
 		this._contentType = contentType;
+	}
+
+	public long getContentLength() {
+		return _contentLength;
+	}
+
+	public void setContentLength(long contentLength) {
+		this._contentLength = contentLength;
 	}
 
 	public int getStatusCode() {

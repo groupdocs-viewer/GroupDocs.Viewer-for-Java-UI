@@ -2,6 +2,8 @@ package com.groupdocs.viewerui.ui.api.viewer;
 
 import com.groupdocs.viewer.FileType;
 import com.groupdocs.viewer.Viewer;
+import com.groupdocs.viewer.ViewerSettings;
+import com.groupdocs.viewer.logging.ConsoleLogger;
 import com.groupdocs.viewer.options.LoadOptions;
 import com.groupdocs.viewer.options.PdfViewOptions;
 import com.groupdocs.viewer.options.ViewInfoOptions;
@@ -17,10 +19,7 @@ import com.groupdocs.viewerui.ui.core.FileStorageProvider;
 import com.groupdocs.viewerui.ui.core.IFileStorage;
 import com.groupdocs.viewerui.ui.core.IViewer;
 import com.groupdocs.viewerui.ui.core.PageFormatter;
-import com.groupdocs.viewerui.ui.core.entities.DocumentInfo;
-import com.groupdocs.viewerui.ui.core.entities.FileCredentials;
-import com.groupdocs.viewerui.ui.core.entities.Page;
-import com.groupdocs.viewerui.ui.core.entities.PageInfo;
+import com.groupdocs.viewerui.ui.core.entities.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +31,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static com.groupdocs.viewerui.ui.core.extensions.CopyExtensions.copyPdfViewOptions;
+import static com.groupdocs.viewerui.ui.core.extensions.CopyExtensions.copyViewOptions;
 
 public abstract class BaseViewer implements IViewer {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BaseViewer.class);
@@ -90,9 +89,15 @@ public abstract class BaseViewer implements IViewer {
 
 	public abstract String getPageExtension();
 
+	public abstract String getThumbExtension();
+
 	public abstract Page createPage(int pageNumber, byte[] data);
 
+	public abstract Thumb createThumb(int pageNumber, byte[] data);
+
 	protected abstract Page renderPage(Viewer viewer, String filePath, int pageNumber);
+
+	protected abstract Thumb renderThumb(Viewer viewer, String filePath, int pageNumber);
 
 	protected abstract ViewInfoOptions createViewInfoOptions();
 
@@ -111,6 +116,13 @@ public abstract class BaseViewer implements IViewer {
 		return page;
 	}
 
+	/**
+	 * Retrieves a list of pages given file credentials and page numbers.
+	 *
+	 * @param fileCredentials The credentials of the file.
+	 * @param pageNumbers     An array of page numbers to retrieve.
+	 * @return A list of Page objects.
+	 */
 	public List<Page> getPages(FileCredentials fileCredentials, int[] pageNumbers) {
 		Viewer viewer = initViewer(fileCredentials);
 
@@ -123,6 +135,31 @@ public abstract class BaseViewer implements IViewer {
 		return pages;
 	}
 
+	/**
+	 * Retrieves a list of thumbs given file credentials and page numbers asynchronously.
+	 *
+	 * @param fileCredentials The credentials of the file.
+	 * @param pageNumbers     An array of page numbers to retrieve.
+	 * @return A list of Thumb objects.
+	 */
+	public List<Thumb> getThumbs(FileCredentials fileCredentials, int[] pageNumbers) {
+		Viewer viewer = initViewer(fileCredentials);
+
+		List<Thumb> thumbs = new ArrayList<>();
+		for (int pageNumber : pageNumbers) {
+			Thumb thumb = renderThumbInternal(viewer, fileCredentials, pageNumber);
+			thumbs.add(thumb);
+		}
+
+		return thumbs;
+	}
+
+	public Thumb getThumb(FileCredentials fileCredentials, int pageNumber) {
+		final Viewer viewer = initViewer(fileCredentials);
+		Thumb thumb = renderThumbInternal(viewer, fileCredentials, pageNumber);
+		return thumb;
+	}
+
 	public byte[] getPdf(FileCredentials fileCredentials) {
 		try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
 			PdfViewOptions viewOptions = createPdfViewOptions(byteArrayOutputStream);
@@ -131,8 +168,7 @@ public abstract class BaseViewer implements IViewer {
 			viewer.view(viewOptions);
 
 			return byteArrayOutputStream.toByteArray();
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			LOGGER.error("Exception throws while getting pdf: filePath={}", fileCredentials.getFilePath(), e);
 			throw new ViewerUiException(e);
 		}
@@ -144,7 +180,7 @@ public abstract class BaseViewer implements IViewer {
 		PdfViewOptions viewOptions = new PdfViewOptions(() -> pdfStream, closeable -> {
 		});
 
-		copyPdfViewOptions(_viewerConfig.getPdfViewOptions(), viewOptions);
+		copyViewOptions(_viewerConfig.getPdfViewOptions(), viewOptions);
 
 		return viewOptions;
 	}
@@ -192,6 +228,12 @@ public abstract class BaseViewer implements IViewer {
 		page = _pageFormatter.format(fileCredentials, page);
 
 		return page;
+	}
+
+	private Thumb renderThumbInternal(Viewer viewer, FileCredentials fileCredentials, int pageNumber) {
+		Thumb thumb = renderThumb(viewer, fileCredentials.getFilePath(), pageNumber);
+
+		return thumb;
 	}
 
 	private static synchronized Object getFileLock(String filename) {

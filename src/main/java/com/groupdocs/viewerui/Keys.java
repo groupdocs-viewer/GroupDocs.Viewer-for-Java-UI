@@ -1,19 +1,19 @@
 package com.groupdocs.viewerui;
 
-public class Keys {
+public interface Keys {
 
-	public static final String GROUPDOCSVIEWERUI_SECTION_SETTING_KEY = "GroupDocsViewerUI";
+	String GROUPDOCSVIEWERUI_SECTION_SETTING_KEY = "GroupDocsViewerUI";
 
-	public static final String GROUPDOCSVIEWERUI_MAIN_UI_RESOURCE = "index.html";
+	String GROUPDOCSVIEWERUI_MAIN_UI_RESOURCE = "index.html";
 
-	public static final String GROUPDOCSVIEWERUI_MAIN_UI_PATH = "#uiPath#";
+	String GROUPDOCSVIEWERUI_MAIN_UI_PATH = "#uiPath#";
 
-	public static final String GROUPDOCSVIEWERUI_MAIN_UI_API_TARGET = "#apiEndpoint#";
+	String GROUPDOCSVIEWERUI_MAIN_UI_TITLE = "#uiTitle#";
 
-	public static final String GROUPDOCSVIEWERUI_MAIN_UI_SETTINGS_PATH_TARGET = "#uiSettingsPath#";
+	String GROUPDOCSVIEWERUI_MAIN_UI_CONFIG = "#uiConfig#";
 
-	public static final String GROUPDOCSVIEWERUI_STYLESHEETS_TARGET = "<link rel=\"stylesheet\" href=\"custom.css\">";
+	String GROUPDOCSVIEWERUI_STYLESHEETS_TARGET = "<link rel=\"stylesheet\" href=\"custom.css\">";
 
-	public static final String DEFAULT_RESPONSE_CONTENT_TYPE = "application/json";
+	String DEFAULT_RESPONSE_CONTENT_TYPE = "application/json";
 
 }

@@ -2,10 +2,10 @@ package com.groupdocs.viewerui.ui.api.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class LoadDocumentDescriptionRequest {
+public class ViewDataRequest {
 
-	@JsonProperty("guid")
-	private String _guid;
+	@JsonProperty("file")
+	private String _file;
 
 	@JsonProperty("fileType")
 	private String _fileType;
@@ -16,12 +16,12 @@ public class LoadDocumentDescriptionRequest {
 	/**
 	 * File unique ID.
 	 */
-	public String getGuid() {
-		return _guid;
+	public String getFile() {
+		return _file;
 	}
 
-	public void setGuid(String Guid) {
-		this._guid = Guid;
+	public void setGuid(String file) {
+		this._file = file;
 	}
 
 	/**
@@ -45,5 +45,4 @@ public class LoadDocumentDescriptionRequest {
 	public void setPassword(String Password) {
 		this._password = Password;
 	}
-
 }

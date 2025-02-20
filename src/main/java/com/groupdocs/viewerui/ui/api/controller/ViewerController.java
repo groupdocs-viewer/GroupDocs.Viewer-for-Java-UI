@@ -1,14 +1,17 @@
 package com.groupdocs.viewerui.ui.api.controller;
 
+import com.groupdocs.viewer.utils.PathUtils;
 import com.groupdocs.viewerui.exception.ViewerUiException;
 import com.groupdocs.viewerui.ui.api.FileNameResolver;
 import com.groupdocs.viewerui.ui.api.SearchTermResolver;
 import com.groupdocs.viewerui.ui.api.infrastructure.ViewerActionResult;
 import com.groupdocs.viewerui.ui.api.models.*;
+import com.groupdocs.viewerui.ui.api.utils.IApiUrlBuilder;
 import com.groupdocs.viewerui.ui.core.FileStorageProvider;
 import com.groupdocs.viewerui.ui.core.IFileStorage;
 import com.groupdocs.viewerui.ui.core.IViewer;
 import com.groupdocs.viewerui.ui.core.configuration.Config;
+import com.groupdocs.viewerui.ui.core.configuration.RenderingMode;
 import com.groupdocs.viewerui.ui.core.entities.*;
 import com.groupdocs.viewerui.ui.core.extensions.StreamExtensions;
 import com.groupdocs.viewerui.ui.core.extensions.StringExtensions;
@@ -20,10 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -33,21 +33,23 @@ public class ViewerController implements Closeable {
     public static final String JSON_CONTENT_TYPE = "application/json";
     private final FileNameResolver _fileNameResolver;
     private final SearchTermResolver _searchTermResolver;
+    private final IApiUrlBuilder _apiUrlBuilder;
     private final IViewer _viewer;
     private final Config _config;
     private FileStorageProvider _fileStorageProvider;
 
     public ViewerController(FileStorageProvider fileStorageProvider, FileNameResolver fileNameResolver,
-                            SearchTermResolver searchTermResolver, IViewer viewer, Config config) {
+                            SearchTermResolver searchTermResolver, IViewer viewer, Config config, IApiUrlBuilder apiUrlBuilder) {
         _fileStorageProvider = fileStorageProvider;
         _fileNameResolver = fileNameResolver;
         _searchTermResolver = searchTermResolver;
         _viewer = viewer;
         _config = config;
+        this._apiUrlBuilder = apiUrlBuilder;
     }
 
-    public ViewerActionResult loadFileTree(LoadFileTreeRequest request) {
-        if (!_config.isBrowse()) {
+    public ViewerActionResult listDir(LoadFileTreeRequest request) {
+        if (!_config.isEnableFileBrowser()) {
             return errorJsonResult("Browsing files is disabled.");
         }
 
@@ -65,36 +67,29 @@ public class ViewerController implements Closeable {
         }
     }
 
-    public ViewerActionResult loadDocumentDescription(LoadDocumentDescriptionRequest request) {
-        final String guid = request.getGuid();
+    public ViewerActionResult viewData(ViewDataRequest request) {
+        final String guid = request.getFile();
         try {
             FileCredentials fileCredentials = new FileCredentials(
                     guid,
                     request.getFileType(),
                     request.getPassword());
-            DocumentInfo documentDescription = _viewer.getDocumentInfo(fileCredentials);
+            DocumentInfo documentInfo = _viewer.getDocumentInfo(fileCredentials);
 
-            int[] pageNumbers = getPageNumbers(documentDescription.getPages().size());
-            List<Page> pagesData = _viewer.getPages(fileCredentials, pageNumbers);
+            int[] pagesToCreate = getPagesToCreate(documentInfo.getPages().size(), _config.getPreloadPages());
+            List<PageData> pages = createViewDataPages(fileCredentials, documentInfo, pagesToCreate);
 
-            List<PageDescription> pages = new ArrayList<>();
             final String searchTerm = _searchTermResolver.resolveSearchTerm(guid);
-            for (PageInfo pageInfo : documentDescription.getPages()) {
-                final Optional<Page> pageData = pagesData.stream()
-                        .filter(page -> page.getPageNumber() == pageInfo.getNumber())
-                        .findFirst();
-                String content = null;
-                if (pageData.isPresent()) {
-                    content = pageData.get().getContent();
-                }
-                PageDescription pageDescription = new PageDescription(pageInfo.getWidth(), pageInfo.getHeight(),
-                        pageInfo.getName(), pageInfo.getNumber(), content);
-
-                pages.add(pageDescription);
-            }
-
-            LoadDocumentDescriptionResponse result = new LoadDocumentDescriptionResponse(guid,
-                    documentDescription.getFileType(), documentDescription.isPrintAllowed(), pages, searchTerm);
+            final String fileName = _fileNameResolver.resolveFileName(request.getFile());
+            ViewDataResponse result = new ViewDataResponse(
+                    request.getFile(),
+                    documentInfo.getFileType(),
+                    fileName == null || fileName.trim().isEmpty()
+                            ? PathUtils.getFileName(request.getFile())
+                            : fileName,
+                    documentInfo.isPrintAllowed(),
+                    searchTerm,
+                    pages);
 
             return okJsonResult(result);
         } catch (Exception e) {
@@ -109,8 +104,8 @@ public class ViewerController implements Closeable {
         }
     }
 
-    public ViewerActionResult loadDocumentPageResource(LoadDocumentPageResourceRequest request) {
-        if (!_config.isHtmlMode()) {
+    public ViewerActionResult getResource(GetResourceRequest request) {
+        if (_config.getRenderingMode() != RenderingMode.Html) {
             return errorJsonResult("Loading page resources is disabled in image mode.");
         }
 
@@ -126,32 +121,15 @@ public class ViewerController implements Closeable {
 
             String contentType = StringExtensions.contentTypeFromFileName(request.getResourceName());
 
-            return new ViewerActionResult(contentType, HttpURLConnection.HTTP_OK, bytes);
+            return new ViewerActionResult(contentType, bytes.length, HttpURLConnection.HTTP_OK, bytes);
         } catch (Exception e) {
             LOGGER.error("Exception throws while loading document page resource: guid={}", guid, e);
             return errorJsonResult(e.getMessage());
         }
     }
 
-    public ViewerActionResult downloadDocument(String path) {
-        if (!_config.isDownload()) {
-            return errorJsonResult("Downloading files is disabled.");
-        }
-        final IFileStorage fileStorage = _fileStorageProvider.provide();
-
-        try {
-            String fileName = _fileNameResolver.resolveFileName(path);
-            byte[] bytes = fileStorage.readFile(path);
-
-            return new ViewerActionResult("application/octet-stream", HttpURLConnection.HTTP_OK, new FileResponse(bytes, fileName));
-        } catch (Exception e) {
-            LOGGER.error("Exception throws while downloading document: path={}", path, e);
-            return errorJsonResult(e.getMessage());
-        }
-    }
-
-    public ViewerActionResult uploadDocument(String fileNameOrUrl, InputStream inputStream, boolean isRewrite) {
-        if (!_config.isUpload()) {
+    public ViewerActionResult uploadFile(String fileNameOrUrl, InputStream inputStream, boolean isRewrite) {
+        if (!_config.isEnableFileUpload()) {
             return errorJsonResult("Uploading files is disabled.");
         }
         final IFileStorage fileStorage = _fileStorageProvider.provide();
@@ -170,53 +148,128 @@ public class ViewerController implements Closeable {
         }
     }
 
-    public ViewerActionResult printPdf(PrintPdfRequest request) {
-        if (!_config.isPrint()) {
-            return errorJsonResult("Printing files is disabled.");
+    public ViewerActionResult createPdf(CreatePdfRequest request) {
+        if (!_config.isEnableDownloadPdf() && !_config.isEnablePrint()) {
+            return errorJsonResult("Creating PDF files is disabled.");
         }
 
-        final String guid = request.getGuid();
+        final String file = request.getFile();
         try {
-            FileCredentials fileCredentials = new FileCredentials(guid, request.getFileType(),
-                    request.getPassword());
+            FileCredentials fileCredentials = new FileCredentials(file, request.getFileType(), request.getPassword());
 
-            String fileName = _fileNameResolver.resolveFileName(guid);
-            String pdfFileName = StringExtensions.changeExtension(fileName, ".pdf");
-            byte[] pdfFileBytes = _viewer.getPdf(fileCredentials);
+            _viewer.getPdf(fileCredentials);
 
-            return new ViewerActionResult("application/pdf", HttpURLConnection.HTTP_OK, new FileResponse(pdfFileBytes, pdfFileName));
+            final CreatePdfResponse createPdfResponse = new CreatePdfResponse();
+            final String pdfUrl = _apiUrlBuilder.buildPdfUrl(request.getFile());
+            createPdfResponse.setPdfUrl(pdfUrl);
+
+            return okJsonResult(createPdfResponse);
         } catch (Exception e) {
             if (e.getMessage() != null && e.getMessage().toLowerCase(Locale.ROOT).contains("password")) {
                 String message = request.getPassword() == null || request.getPassword().isEmpty() ? "Password Required" : "Incorrect Password";
 
                 return forbiddenJsonResult(message);
             }
-            LOGGER.error("Exception throws while printing pdf: guid={}", guid, e);
+            LOGGER.error("Exception throws while printing pdf: file={}", file, e);
             return errorJsonResult(e.getMessage());
         }
     }
 
-    private int[] getPageNumbers(int totalPageCount) {
-        if (_config.getPreloadPageCount() == 0) {
+    public ViewerActionResult getPage(GetPageRequest request) {
+        try {
+            FileCredentials fileCredentials = new FileCredentials(request.getFile());
+            Page page = _viewer.getPage(fileCredentials, request.getPage());
+
+            byte[] bytes = page.getPageData();
+
+            return new ViewerActionResult(page.getContentType(), bytes.length, HttpURLConnection.HTTP_OK, bytes);
+        } catch (Exception e) {
+            LOGGER.error(String.format("Failed to retrieve document page, file: '%s', page: %s ", request.getFile(), request.getPage()), e);
+            return errorJsonResult(e.getMessage());
+        }
+    }
+
+    public ViewerActionResult getThumb(GetThumbRequest request) {
+        try {
+            FileCredentials fileCredentials = new FileCredentials(request.getFile());
+            Thumb thumb = _viewer.getThumb(fileCredentials, request.getPage());
+
+            final byte[] bytes = thumb.getThumbData();
+            return new ViewerActionResult(thumb.getContentType(), bytes.length, HttpURLConnection.HTTP_OK, bytes);
+        } catch (Exception e) {
+            LOGGER.error("Failed to retrieve document thumb", e);
+            return errorJsonResult(e.getMessage());
+        }
+    }
+
+    public ViewerActionResult getPdf(GetPdfRequest request) {
+        if (!_config.isEnableDownloadPdf() && !_config.isEnablePrint()) {
+            return errorJsonResult("Creating PDF files is disabled.");
+        }
+
+        try {
+            FileCredentials fileCredentials = new FileCredentials(request.getFile());
+
+            String fileName = _fileNameResolver.resolveFileName(request.getFile());
+            String pdfFileName = StringExtensions.changeExtension(fileName, ".pdf");
+            byte[] bytes = _viewer.getPdf(fileCredentials);
+
+            return new ViewerActionResult("application/pdf", bytes.length, HttpURLConnection.HTTP_OK, new FileResponse(bytes, pdfFileName));
+        } catch (Exception e) {
+            LOGGER.error("Failed to retrieve PDF file.", e);
+
+            return errorJsonResult(e.getMessage());
+        }
+    }
+
+    // NOTE: This method returns all of the pages including created and not
+    private List<PageData> createViewDataPages(FileCredentials file, DocumentInfo docInfo, int[] pagesToCreate) {
+        _viewer.getPages(file, pagesToCreate);
+
+        if (_config.isEnableThumbnails()) {
+            _viewer.getThumbs(file, pagesToCreate);
+        }
+
+        List<PageData> pages = new ArrayList<>();
+        for (PageInfo page : docInfo.getPages()) {
+            boolean isPageCreated = Arrays.stream(pagesToCreate).anyMatch(p -> p == page.getNumber());
+            if (isPageCreated) {
+                final String pageUrl = _apiUrlBuilder.buildPageUrl(file.getFilePath(), page.getNumber(), _viewer.getPageExtension());
+                final String thumbUrl = _apiUrlBuilder.buildThumbUrl(file.getFilePath(), page.getNumber(), _viewer.getPageExtension());
+
+                final PageData pageData = _config.isEnableThumbnails()
+                        ? new PageData(page.getNumber(), page.getWidth(), page.getHeight(), pageUrl, thumbUrl)
+                        : new PageData(page.getNumber(), page.getWidth(), page.getHeight(), pageUrl);
+
+                pages.add(pageData);
+            } else {
+                pages.add(new PageData(page.getNumber(), page.getWidth(), page.getHeight()));
+            }
+        }
+
+        return pages;
+    }
+
+    private int[] getPagesToCreate(int totalPageCount, int preloadPageCount) {
+        if (preloadPageCount == 0) {
             return IntStream.rangeClosed(1, totalPageCount).toArray();
         }
 
-        int pageCount = Math.min(totalPageCount, _config.getPreloadPageCount());
+        int pageCount = Math.min(totalPageCount, preloadPageCount);
 
         return IntStream.rangeClosed(1, pageCount).toArray();
     }
 
-    public ViewerActionResult loadDocumentPages(LoadDocumentPagesRequest request) {
-        final String guid = request.getGuid();
+    public ViewerActionResult createPages(CreatePagesRequest request) {
+        final String guid = request.getFile();
         try {
-            FileCredentials fileCredentials = new FileCredentials(
-                    guid, request.getFileType(), request.getPassword());
-            List<Page> pages = _viewer.getPages(fileCredentials, request.getPages());
-            List<PageContent> pageContents = pages.stream()
-                    .map(page -> new PageContent(page.getPageNumber(), page.getContent()))
-                    .collect(Collectors.toList());
+            FileCredentials file = new FileCredentials(request.getFile(), request.getFileType(), request.getPassword());
 
-            return okJsonResult(pageContents);
+            DocumentInfo docInfo = _viewer.getDocumentInfo(file);
+
+            List<PageData> pages = createPagesAndThumbs(file, docInfo, request.getPages());
+
+            return okJsonResult(pages);
         } catch (Exception e) {
             if (e.getMessage() != null && e.getMessage().toLowerCase(Locale.ROOT).contains("password")) {
                 String message = request.getPassword() == null || request.getPassword().isEmpty() ? "Password Required"
@@ -227,6 +280,35 @@ public class ViewerController implements Closeable {
             LOGGER.error("Exception throws while loading document pages: guid={}", guid, e);
             return errorJsonResult(e.getMessage());
         }
+    }
+
+    // NOTE: This method returns only created pages
+    private List<PageData> createPagesAndThumbs(FileCredentials file, DocumentInfo docInfo, int[] pagesToCreate) {
+        _viewer.getPages(file, pagesToCreate);
+
+        if (_config.isEnableThumbnails()) {
+            _viewer.getThumbs(file, pagesToCreate);
+        }
+
+        List<PageData> pages = new ArrayList<>();
+        for (int pageNumber : pagesToCreate) {
+            final Optional<PageInfo> pageInfoOptional = docInfo.getPages().stream().filter(p -> p.getNumber() == pageNumber).findFirst();
+            if (pageInfoOptional.isPresent()) {
+                PageInfo page = pageInfoOptional.get();
+                final String pageUrl = _apiUrlBuilder.buildPageUrl(file.getFilePath(), page.getNumber(), _viewer.getPageExtension());
+                final String thumbUrl = _apiUrlBuilder.buildThumbUrl(file.getFilePath(), page.getNumber(), _viewer.getThumbExtension());
+
+                final PageData pageData = _config.isEnableThumbnails()
+                        ? new PageData(page.getNumber(), page.getWidth(), page.getHeight(), pageUrl, thumbUrl)
+                        : new PageData(page.getNumber(), page.getWidth(), page.getHeight(), pageUrl);
+
+                pages.add(pageData);
+            } else {
+                LOGGER.warn("Page {} was not found in collection.", pageNumber);
+            }
+        }
+
+        return pages;
     }
 
     public ViewerActionResult loadDocumentPage(LoadDocumentPageRequest request) {
@@ -318,6 +400,10 @@ public class ViewerController implements Closeable {
 
     public void setFileStorageProvider(FileStorageProvider fileStorageProvider) {
         this._fileStorageProvider = fileStorageProvider;
+    }
+
+    public IApiUrlBuilder getApiUrlBuilder() {
+        return _apiUrlBuilder;
     }
 
     @Override

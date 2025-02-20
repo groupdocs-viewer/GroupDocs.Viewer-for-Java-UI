@@ -16,7 +16,7 @@ public class UiOptions {
 
 	private String _uiPath = "/viewer";
 
-	private String _uiConfigEndpoint = "/viewer-config";
+	private String _uiTitle = "GroupDocs.Viewer UI";
 
 	private Set<String> _customStylesheets = new HashSet<>();
 
@@ -50,14 +50,6 @@ public class UiOptions {
 		this._uiPath = uiPath;
 	}
 
-	public String getUiConfigEndpoint() {
-		return _uiConfigEndpoint;
-	}
-
-	public void setUiConfigEndpoint(String uiConfigEndpoint) {
-		this._uiConfigEndpoint = uiConfigEndpoint;
-	}
-
 	public Set<String> getCustomStylesheets() {
 		return _customStylesheets;
 	}
@@ -66,12 +58,23 @@ public class UiOptions {
 		this._customStylesheets = customStylesheets;
 	}
 
+	/**
+	 * HTML document title. The default value is "GroupDocs.Viewer UI".
+	 */
+	public String getUiTitle() {
+		return _uiTitle;
+	}
+
+	public void setUiTitle(String uiTitle) {
+		this._uiTitle = uiTitle;
+	}
+
 	@Override
 	public String toString() {
 		return "UiOptions {" +
-			   " uiPath='" + _uiPath + '\'' +
-			   ", uiConfigEndpoint='" + _uiConfigEndpoint + '\'' +
-			   ", customStylesheets=" + _customStylesheets +
-			   " }";
+				" uiPath='" + _uiPath + '\'' +
+				", uiTitle='" + _uiTitle + '\'' +
+				", customStylesheets=" + _customStylesheets +
+				" }";
 	}
 }

@@ -8,6 +8,10 @@ public class FileCredentials {
 
 	private String _password;
 
+	public FileCredentials(String _filePath) {
+		this._filePath = _filePath;
+	}
+
 	public FileCredentials(String filePath, String fileType, String password) {
 		_filePath = filePath;
 		_fileType = fileType;
@@ -23,7 +27,7 @@ public class FileCredentials {
 	}
 
 	public String getPassword() {
-		return _password;
+		return _password == null ? "" : _password;
 	}
 
 }

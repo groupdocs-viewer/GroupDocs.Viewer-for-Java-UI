@@ -9,6 +9,10 @@ public class CacheKeys {
     }
 
     public static String getPageCacheKey(int pageNumber, String extension) {
-        return "p" + pageNumber + extension;
+        return String.format("p%d%s", pageNumber, extension);
+    }
+
+    public static String getThumbCacheKey(int pageNumber, String extension) {
+        return String.format("p%d_t%s", pageNumber, extension);
     }
 }

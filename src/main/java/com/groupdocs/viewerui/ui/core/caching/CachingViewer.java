@@ -2,10 +2,7 @@ package com.groupdocs.viewerui.ui.core.caching;
 
 import com.groupdocs.viewerui.ui.api.cache.FileCache;
 import com.groupdocs.viewerui.ui.core.IViewer;
-import com.groupdocs.viewerui.ui.core.entities.DocumentInfo;
-import com.groupdocs.viewerui.ui.core.entities.FileCredentials;
-import com.groupdocs.viewerui.ui.core.entities.Page;
-import com.groupdocs.viewerui.ui.core.entities.PageResource;
+import com.groupdocs.viewerui.ui.core.entities.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +30,16 @@ public class CachingViewer implements IViewer {
         return _viewer.getPageExtension();
     }
 
+    public String getThumbExtension() {
+        return _viewer.getThumbExtension();
+    }
+
     public Page createPage(int pageNumber, byte[] data) {
         return _viewer.createPage(pageNumber, data);
+    }
+
+    public Thumb createThumb(int pageNumber, byte[] data) {
+        return _viewer.createThumb(pageNumber, data);
     }
 
     public Page getPage(FileCredentials fileCredentials, int pageNumber) {
@@ -49,7 +54,7 @@ public class CachingViewer implements IViewer {
 
                     saveResources(fileCredentials.getFilePath(), page.getPageNumber(), page.getResources().stream());
 
-                    bytes[0] = page.getData();
+                    bytes[0] = page.getPageData();
                     _fileCache.set(cacheKey, fileCredentials.getFilePath(), bytes[0]);
                 }
             });
@@ -57,6 +62,25 @@ public class CachingViewer implements IViewer {
 
         Page page = createPage(pageNumber, bytes[0]);
         return page;
+    }
+
+    public Thumb getThumb(FileCredentials fileCredentials, int pageNumber) {
+        String cacheKey = CacheKeys.getThumbCacheKey(pageNumber, getThumbExtension());
+        final byte[][] bytes = {_fileCache.get(cacheKey, fileCredentials.getFilePath(), byte[].class)};
+        if (bytes[0] == null) {
+            synchronizedBlock(cacheKey, () -> {
+                bytes[0] = _fileCache.get(cacheKey, fileCredentials.getFilePath(), byte[].class);
+                // If still does not exist
+                if (bytes[0] == null) {
+                    Thumb thumb = _viewer.getThumb(fileCredentials, pageNumber);
+
+                    bytes[0] = thumb.getThumbData();
+                    _fileCache.set(cacheKey, fileCredentials.getFilePath(), bytes[0]);
+                }
+            });
+        }
+        Thumb thumb = createThumb(pageNumber, bytes[0]);
+        return thumb;
     }
 
     public DocumentInfo getDocumentInfo(FileCredentials fileCredentials) {
@@ -117,7 +141,7 @@ public class CachingViewer implements IViewer {
 
     public List<Page> getPages(FileCredentials fileCredentials, int[] pageNumbers) {
         List<CachedPage> pagesOrNulls = getPagesOrNullsFromCache(fileCredentials.getFilePath(), pageNumbers);
-        int[] missingPageNumbers = getMissingPageNumbers(pagesOrNulls.stream());
+        int[] missingPageNumbers = getMissingPageNumbersPage(pagesOrNulls.stream());
 
         if (missingPageNumbers.length == 0) {
             return toPages(pagesOrNulls.stream());
@@ -125,7 +149,7 @@ public class CachingViewer implements IViewer {
 
         List<Page> createdPages = createPages(fileCredentials, missingPageNumbers);
 
-        List<Page> pages = combine(pagesOrNulls.stream(), createdPages);
+        List<Page> pages = combinePage(pagesOrNulls.stream(), createdPages);
 
         return pages;
     }
@@ -135,7 +159,7 @@ public class CachingViewer implements IViewer {
         final String filePath = fileCredentials.getFilePath();
         synchronizedBlock(filePath, () -> {
             List<CachedPage> pagesOrNulls = getPagesOrNullsFromCache(filePath, pageNumbers);
-            int[] missingPageNumbers = getMissingPageNumbers(pagesOrNulls.stream());
+            int[] missingPageNumbers = getMissingPageNumbersPage(pagesOrNulls.stream());
 
             if (missingPageNumbers.length == 0) {
                 pages[0] = toPages(pagesOrNulls.stream());
@@ -144,14 +168,14 @@ public class CachingViewer implements IViewer {
 
             List<Page> createdPages = _viewer.getPages(fileCredentials, missingPageNumbers);
 
-            saveToCache(filePath, createdPages.stream());
+            saveToCachePage(filePath, createdPages.stream());
 
-            pages[0] = combine(pagesOrNulls.stream(), createdPages);
+            pages[0] = combinePage(pagesOrNulls.stream(), createdPages);
         });
         return pages[0];
     }
 
-    private List<Page> combine(Stream<CachedPage> dst, List<Page> missing) {
+    private List<Page> combinePage(Stream<CachedPage> dst, List<Page> missing) {
         return dst
                 .map(pageOrNull -> {
                             Page result = null;
@@ -167,17 +191,58 @@ public class CachingViewer implements IViewer {
                 ).collect(Collectors.toList());
     }
 
-    private void saveToCache(String filePath, Stream<Page> createdPages) {
+    private List<Thumb> combineThumb(Stream<CachedThumb> dst, List<Thumb> missing) {
+        return dst
+                .map(pageOrNull -> {
+                            Thumb result = null;
+                            if (pageOrNull.getData() == null) {
+                                final Optional<Thumb> optionalPage = missing.stream().filter(page -> page.getPageNumber() == pageOrNull.getPageNumber())
+                                        .findFirst();
+                                result = optionalPage.orElse(null);
+                            } else {
+                                result = createThumb(pageOrNull.getPageNumber(), pageOrNull.getData());
+                            }
+                            return result;
+                        }
+                ).collect(Collectors.toList());
+    }
+
+    private void saveToCachePage(String filePath, Stream<Page> createdPages) {
         createdPages
                 .forEach(page ->
                 {
                     String cacheKey = CacheKeys.getPageCacheKey(page.getPageNumber(), _viewer.getPageExtension());
 
-                    _fileCache.set(cacheKey, filePath, page.getData());
+                    _fileCache.set(cacheKey, filePath, page.getPageData());
                     /*List<String> saveResourcesTask = */
                     saveResources(filePath, page.getPageNumber(), page.getResources().stream());
 
                 });
+    }
+
+    private void saveToCacheThumb(String filePath, Stream<Thumb> createdThumbs) {
+        createdThumbs
+                .forEach(page ->
+                {
+                    String cacheKey = CacheKeys.getThumbCacheKey(page.getPageNumber(), _viewer.getThumbExtension());
+                    _fileCache.set(cacheKey, filePath, page.getThumbData());
+                });
+    }
+
+    @Override
+    public List<Thumb> getThumbs(FileCredentials fileCredentials, int[] pageNumbers) {
+        List<CachedThumb> pagesOrNulls = getThumbsOrNullsFromCache(fileCredentials.getFilePath(), pageNumbers);
+        int[] missingPageNumbers = getMissingPageNumbersThumb(pagesOrNulls.stream());
+
+        if (missingPageNumbers.length == 0) {
+            return toThumbs(pagesOrNulls);
+        }
+
+        List<Thumb> createdPages = createThumbs(fileCredentials, missingPageNumbers);
+
+        List<Thumb> thumbs = combineThumb(pagesOrNulls.stream(), createdPages);
+
+        return thumbs;
     }
 
     private List<Page> toPages(Stream<CachedPage> pagesOrNulls) {
@@ -186,10 +251,46 @@ public class CachingViewer implements IViewer {
                 .collect(Collectors.toList());
     }
 
-    private int[] getMissingPageNumbers(Stream<CachedPage> pagesOrNulls) {
+    private List<Thumb> toThumbs(List<CachedThumb> thumbsOrNulls) {
+        List<Thumb> thumbs = thumbsOrNulls.stream()
+                .map(t -> createThumb(t.getPageNumber(), t.getData()))
+                .collect(Collectors.toList());
+
+        return thumbs;
+    }
+
+    private List<Thumb> createThumbs(FileCredentials fileCredentials, int[] pageNumbers) {
+        List<Thumb>[] thumbs = new List[1];
+        final String filePath = fileCredentials.getFilePath();
+        synchronizedBlock(filePath, () -> {
+            List<CachedThumb> pagesOrNulls = getThumbsOrNullsFromCache(filePath, pageNumbers);
+            int[] missingPageNumbers = getMissingPageNumbersThumb(pagesOrNulls.stream());
+
+            if (missingPageNumbers.length == 0) {
+                thumbs[0] = toThumbs(pagesOrNulls);
+                return;
+            }
+
+            List<Thumb> createdPages = _viewer.getThumbs(fileCredentials, missingPageNumbers);
+
+            saveToCacheThumb(filePath, createdPages.stream());
+
+            thumbs[0] = combineThumb(pagesOrNulls.stream(), createdPages);
+        });
+        return thumbs[0];
+    }
+
+    private int[] getMissingPageNumbersPage(Stream<CachedPage> pagesOrNulls) {
         return pagesOrNulls
                 .filter(p -> p.getData() == null)
                 .mapToInt(CachedPage::getPageNumber)
+                .toArray();
+    }
+
+    private int[] getMissingPageNumbersThumb(Stream<CachedThumb> thumbsOrNulls) {
+        return thumbsOrNulls
+                .filter(p -> p.getData() == null)
+                .mapToInt(CachedThumb::getPageNumber)
                 .toArray();
     }
 
@@ -211,6 +312,15 @@ public class CachingViewer implements IViewer {
         final Object lock = new Object();
         final Object actualLock = _asyncLock.computeIfAbsent(filename, k -> new WeakReference<>(lock)).get(); // Retrieve the actual lock object
         return actualLock == null ? lock : actualLock;
+    }
+
+    private List<CachedThumb> getThumbsOrNullsFromCache(String filePath, int[] pageNumbers) {
+        return Arrays.stream(pageNumbers)
+                .mapToObj(pageNumber -> {
+                    final String cacheKey = CacheKeys.getThumbCacheKey(pageNumber, getThumbExtension());
+                    final byte[] data = _fileCache.get(cacheKey, filePath, byte[].class);
+                    return new CachedThumb(pageNumber, data);
+                }).collect(Collectors.toList());
     }
 
     private static void cleanupUnusedLocks() {

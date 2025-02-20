@@ -7,17 +7,15 @@ package com.groupdocs.viewerui.ui.core;
  */
 public enum ActionName {
     UI_RESOURCE("/"),
-    LOAD_CONFIG("/viewer-config"),
-    API_LOAD_FILE_TREE("/loadFileTree"),
-    API_LOAD_DOCUMENT_DESCRIPTION("/loadDocumentDescription"),
-    API_LOAD_DOCUMENT_PAGE_RESOURCE("/loadDocumentPageResource"),
-    API_DOWNLOAD_DOCUMENT("/downloadDocument"),
-    API_UPLOAD_DOCUMENT("/uploadDocument"),
-    API_LOAD_DOCUMENT_PAGES("/loadDocumentPages"),
-    API_PRINT_PDF("/printPdf"),
-/*
-    API_LOAD_DOCUMENT_PAGE(""),
-    API_LOAD_THUMBNAILS(""),*/;
+    API_METHOD_LIST_DIR("/list-dir"),
+    API_METHOD_UPLOAD_FILE("/upload-file"),
+    API_METHOD_VIEW_DATA("/view-data"),
+    API_METHOD_CREATE_PAGES("/create-pages"),
+    API_METHOD_CREATE_PDF("/create-pdf"),
+    API_METHOD_GET_PAGE("/get-page"),
+    API_METHOD_GET_THUMB("/get-thumb"),
+    API_METHOD_GET_PDF("/get-pdf"),
+    API_METHOD_GET_RESOURCE("/get-resource");
 
     private String _url;
 

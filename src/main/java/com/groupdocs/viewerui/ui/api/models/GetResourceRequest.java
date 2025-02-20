@@ -2,7 +2,7 @@ package com.groupdocs.viewerui.ui.api.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class LoadDocumentPageResourceRequest {
+public class GetResourceRequest {
 
 	@JsonProperty("guid")
 	private String _guid;

@@ -18,12 +18,10 @@ public class DefaultActionNameDetector implements IActionNameDetector {
         final UiOptions uiOptions = getUiOptions();
         if (requestUrl.startsWith(StringExtensions.withTrailingSlash(uiOptions.getUiPath()))) {
             return ActionName.UI_RESOURCE;
-        } else if (requestUrl.endsWith(ActionName.LOAD_CONFIG.getUrl())) {
-            return ActionName.LOAD_CONFIG;
         } else if (isApiRequest(requestUrl)) {
             for (ActionName actionName : ActionName.values()) {
                 final String trimmedTrailingSlash = StringExtensions.trimTrailingSlash(requestUrl);
-                if (actionName != ActionName.UI_RESOURCE && actionName != ActionName.LOAD_CONFIG &&
+                if (actionName != ActionName.UI_RESOURCE &&
                     (!trimmedTrailingSlash.isEmpty() && trimmedTrailingSlash.endsWith(actionName.getUrl()))) {
                         return actionName;
 

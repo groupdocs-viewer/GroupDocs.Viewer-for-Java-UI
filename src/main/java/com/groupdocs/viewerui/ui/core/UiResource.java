@@ -1,14 +1,16 @@
 package com.groupdocs.viewerui.ui.core;
 
+import java.nio.charset.StandardCharsets;
+
 public class UiResource {
 
-	private String _content;
+	private byte[] _content;
 
 	private String _contentType;
 
 	private String _fileName;
 
-	private UiResource(String fileName, String content, String contentType) {
+	private UiResource(String fileName, byte[] content, String contentType) {
 		if (content == null) {
 			throw new IllegalArgumentException("content");
 		}
@@ -23,16 +25,20 @@ public class UiResource {
 		setFileName(fileName);
 	}
 
-	public static UiResource create(String fileName, String content, String contentType) {
+	public static UiResource create(String fileName, byte[] content, String contentType) {
 		return new UiResource(fileName, content, contentType);
 	}
 
-	public String getContent() {
+	public byte[] getContent() {
 		return _content;
 	}
 
-	public void setContent(String Content) {
-		_content = Content;
+	public String getContentAsString() {
+		return new String(_content, StandardCharsets.UTF_8);
+	}
+
+	public void setContent(byte[] content) {
+		_content = content;
 	}
 
 	public String getContentType() {

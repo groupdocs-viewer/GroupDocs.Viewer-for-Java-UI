@@ -31,7 +31,7 @@ public abstract class Page {
 		return _pageNumber;
 	}
 
-	public byte[] getData() {
+	public byte[] getPageData() {
 		return (_data == null) ? new byte[0] : _data;
 	}
 
@@ -46,6 +46,8 @@ public abstract class Page {
 	public void addResource(PageResource pageResource) {
 		_resources.add(pageResource);
 	}
+
+	public abstract String getContentType();
 
 	public PageResource getResource(String resourceName) {
 		final Optional<PageResource> firstOptional = _resources.stream()

@@ -52,7 +52,8 @@ public class DefaultViewerFactory implements ViewerFactory {
         }
 
         final FileCache fileCache = FileCacheFactory.newInstance();
-        return new CachingViewer(viewer, fileCache);
+        final CachingViewer cachingViewer = new CachingViewer(viewer, fileCache);
+        return cachingViewer;
     }
 
 }

@@ -4,6 +4,10 @@ public class ApiOptions {
 
 	private String _apiEndpoint = "/viewer-api";
 
+
+	/**
+	 * The API path or endpoint. The default value is "/viewer-api"
+	 */
 	public String getApiEndpoint() {
 		return _apiEndpoint;
 	}
@@ -15,7 +19,7 @@ public class ApiOptions {
 	@Override
 	public String toString() {
 		return "ApiOptions {" +
-			   " apiEndpoint='" + _apiEndpoint + '\'' +
-			   " }";
+				" apiEndpoint='" + _apiEndpoint + '\'' +
+				" }";
 	}
 }

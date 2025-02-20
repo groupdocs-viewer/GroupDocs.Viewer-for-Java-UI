@@ -1,5 +1,6 @@
 package com.example.groupdocsviewerjavauispringboot;
 
+import com.groupdocs.viewer.logging.ConsoleLogger;
 import com.groupdocs.viewerui.handler.JakartaViewerEndpointHandler;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,7 +26,6 @@ public class DemoApplication {
 	}
 
 	@GetMapping({ ViewerConfiguration.VIEWER_UI_PATH, ViewerConfiguration.VIEWER_UI_PATH + "/**",
-			ViewerConfiguration.VIEWER_CONFIG_ENDPOINT, ViewerConfiguration.VIEWER_CONFIG_ENDPOINT + "/**",
 			ViewerConfiguration.VIEWER_API_ENDPOINT, ViewerConfiguration.VIEWER_API_ENDPOINT + "/**" })
 	public void handleViewerUiRequest(HttpServletRequest request, HttpServletResponse response) {
 		this._viewerEndpointHandler.handleViewerRequest(request, response);

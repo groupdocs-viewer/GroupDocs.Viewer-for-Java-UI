@@ -4,21 +4,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class UploadFileResponse {
 
-    @JsonProperty("guid")
-    private final String _guid;
+    @JsonProperty("file")
+    private final String _file;
 
     /**
      * .ctor
      */
     public UploadFileResponse(String filePath) {
-        _guid = filePath;
+        _file = filePath;
     }
 
     /**
      * Unique file ID.
      */
-    public String getGuid() {
-        return _guid;
+    public String getFile() {
+        return _file;
     }
 
 }

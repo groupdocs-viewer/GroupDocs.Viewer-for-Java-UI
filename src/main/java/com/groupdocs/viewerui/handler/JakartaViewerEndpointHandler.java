@@ -113,12 +113,14 @@ public class JakartaViewerEndpointHandler extends CommonViewerEndpointHandler {
             if (isUploadRequest(requestUrl)) {
                 handleUploadRequest(servletRequest, servletResponse, arrayOutputStream);
             } else {
-                final int resultCode = super.handleViewerRequest(requestUrl, queryString, requestStream, servletResponse::addHeader, arrayOutputStream);
+                final int resultCode = super.handleViewerRequest(requestUrl, queryString, requestStream, servletResponse::setHeader, arrayOutputStream);
                 servletResponse.setStatus(resultCode); // Must be set before writing to output stream
             }
             try (final OutputStream outputStream = servletResponse.getOutputStream()) {
                 outputStream.write(arrayOutputStream.toByteArray());
             }
+        } catch (ViewerUiException e) {
+            throw e;
         } catch (Exception e) {
             LOGGER.error("Exception throws while handling viewer request: requestUrl={}, queryString={}", requestUrl, queryString, e);
             throw new ViewerUiException("Exception was thrown while handling request", e);
@@ -148,9 +150,11 @@ public class JakartaViewerEndpointHandler extends CommonViewerEndpointHandler {
         }
         try {
             final Part rewritePart = request.getPart("rewrite");
-            boolean isRewrite;
-            try (final InputStream inputStream = rewritePart.getInputStream()) {
-                isRewrite = Boolean.toString(true).equals(new String(StreamExtensions.toByteArray(inputStream), StandardCharsets.UTF_8));
+            boolean isRewrite = false;
+            if (rewritePart != null) {
+                try (final InputStream inputStream = rewritePart.getInputStream()) {
+                    isRewrite = Boolean.toString(true).equals(new String(StreamExtensions.toByteArray(inputStream), StandardCharsets.UTF_8));
+                }
             }
             final int resultCode = handleViewerUploadRequest(fileStream, fileName, isRewrite, response::setHeader, arrayOutputStream);
             response.setStatus(resultCode);

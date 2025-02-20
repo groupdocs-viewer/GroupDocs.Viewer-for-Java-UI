@@ -12,8 +12,6 @@ import java.nio.file.Paths;
 public class ViewerConfiguration {
     public static final String VIEWER_UI_PATH = "/viewer";
 
-    public static final String VIEWER_CONFIG_ENDPOINT = "/viewer-config";
-
     public static final String VIEWER_API_ENDPOINT = "/viewer-api";
 
     private JakartaViewerEndpointHandler _viewerEndpointHandler;
@@ -22,16 +20,18 @@ public class ViewerConfiguration {
     public void init() {
         _viewerEndpointHandler = JakartaViewerEndpointHandler
                 .setupGroupDocsViewer((viewerConfig, config) -> {
-                    viewerConfig.setViewerType(ViewerType.PNG);
+                    final ViewerType viewerType = ViewerType.PNG;
+
+                   viewerConfig.setViewerType(viewerType);
 //                    viewerConfig.setLicensePath("GroupDocs.Viewer.Product.Family.lic");
 
-                    config.setPreloadPageCount(2);
+                    config.setPreloadPages(2);
                     config.setBaseUrl("http://localhost:8080");
+                    config.setRenderingMode(viewerType.toRenderingMode());
                 })
 
                 .setupGroupDocsViewerUI(uiOptions -> {
                     uiOptions.setUiPath(VIEWER_UI_PATH);
-                    uiOptions.setUiConfigEndpoint(VIEWER_CONFIG_ENDPOINT);
                 })
                 .setupGroupDocsViewerApi(apiOptions -> {
                     apiOptions.setApiEndpoint(VIEWER_API_ENDPOINT);

@@ -143,7 +143,12 @@ public class ServletsViewerEndpointHandler extends CommonViewerEndpointHandler {
                 final URL url = new URL(fileUrl);
                 final String urlFile = url.getFile();
                 final int lastIndexOf = urlFile.lastIndexOf('/');
-                fileName = urlFile.substring(lastIndexOf == -1 ? 0 : lastIndexOf + 1);
+                final String fileNameWithParams = urlFile.substring(lastIndexOf == -1 ? 0 : lastIndexOf + 1);
+                if (fileNameWithParams.contains("?")) {
+                    fileName = fileNameWithParams.substring(0, fileNameWithParams.indexOf("?"));
+                } else {
+                    fileName = fileNameWithParams;
+                }
                 fileStream = url.openStream();
             }
         }

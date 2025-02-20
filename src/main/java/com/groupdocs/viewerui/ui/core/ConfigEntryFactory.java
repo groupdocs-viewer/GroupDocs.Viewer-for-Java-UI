@@ -14,26 +14,28 @@ public class ConfigEntryFactory implements IConfigEntryFactory {
             throw new IllegalArgumentException("config");
         }
         final ConfigEntry configEntry = new ConfigEntry();
-        configEntry.setPageSelector(config.isPageSelector());
-        configEntry.setDownload(config.isDownload());
-        configEntry.setUpload(config.isUpload());
-        configEntry.setPrint(config.isPrint());
-        configEntry.setBrowse(config.isBrowse());
-        configEntry.setRewrite(config.isRewrite());
-        configEntry.setEnableRightClick(config.isEnableRightClick());
-        configEntry.setDefaultDocument(config.getDefaultDocument());
-        configEntry.setPreloadPageCount(config.getPreloadPageCount());
-        configEntry.setZoom(config.isZoom());
-        configEntry.setSearch(config.isSearch());
-        configEntry.setThumbnails(config.isThumbnails());
-        configEntry.setHtmlMode(config.isHtmlMode());
-        configEntry.setPrintAllowed(config.isPrintAllowed());
-        configEntry.setRotate(config.isRotate());
-        configEntry.setSaveRotateState(config.isSaveRotateState());
+        configEntry.setEnableLanguageSelector(config.isEnableLanguageSelector());
         configEntry.setDefaultLanguage(config.getDefaultLanguage());
         configEntry.setSupportedLanguages(config.getSupportedLanguages());
-        configEntry.setShowLanguageMenu(config.isShowLanguageMenu());
-        configEntry.setShowToolBar(config.isShowToolBar());
+        configEntry.setRenderingMode(config.getRenderingMode());
+        configEntry.setStaticContentMode(config.isStaticContentMode());
+        configEntry.setInitialFile(config.getInitialFile());
+        configEntry.setPreloadPages(config.getPreloadPages());
+        configEntry.setEnableContextMenu(config.isEnableContextMenu());
+        configEntry.setEnableHyperlinks(config.isEnableHyperlinks());
+        configEntry.setEnableHeader(config.isEnableHeader());
+        configEntry.setEnableToolbar(config.isEnableToolbar());
+        configEntry.setEnableFileName(config.isEnableFileName());
+        configEntry.setEnableThumbnails(config.isEnableThumbnails());
+        configEntry.setEnableZoom(config.isEnableZoom());
+        configEntry.setEnablePageSelector(config.isEnablePageSelector());
+        configEntry.setEnableSearch(config.isEnableSearch());
+        configEntry.setEnablePrint(config.isEnablePrint());
+        configEntry.setEnableDownloadPdf(config.isEnableDownloadPdf());
+        configEntry.setEnablePresentation(config.isEnablePresentation());
+        configEntry.setEnableFileBrowser(config.isEnableFileBrowser());
+        configEntry.setEnableFileUpload(config.isEnableFileUpload());
+
         return configEntry;
     }
 }

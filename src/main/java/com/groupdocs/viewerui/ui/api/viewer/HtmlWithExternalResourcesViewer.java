@@ -4,21 +4,20 @@ import com.groupdocs.viewer.Viewer;
 import com.groupdocs.viewer.interfaces.PageStreamFactory;
 import com.groupdocs.viewer.interfaces.ResourceStreamFactory;
 import com.groupdocs.viewer.options.HtmlViewOptions;
+import com.groupdocs.viewer.options.JpgViewOptions;
 import com.groupdocs.viewer.options.ViewInfoOptions;
 import com.groupdocs.viewer.results.Resource;
 import com.groupdocs.viewerui.exception.ViewerUiException;
-import com.groupdocs.viewerui.ui.api.Constants;
+import com.groupdocs.viewerui.ui.api.ApiNames;
 import com.groupdocs.viewerui.ui.api.FileTypeResolver;
+import com.groupdocs.viewerui.ui.api.configuration.ThumbSettings;
 import com.groupdocs.viewerui.ui.api.internalcaching.InternalCache;
 import com.groupdocs.viewerui.ui.api.licensing.ViewerLicenser;
 import com.groupdocs.viewerui.ui.configuration.ApiOptions;
 import com.groupdocs.viewerui.ui.configuration.ViewerConfig;
 import com.groupdocs.viewerui.ui.core.FileStorageProvider;
 import com.groupdocs.viewerui.ui.core.PageFormatter;
-import com.groupdocs.viewerui.ui.core.entities.FileCredentials;
-import com.groupdocs.viewerui.ui.core.entities.HtmlPage;
-import com.groupdocs.viewerui.ui.core.entities.Page;
-import com.groupdocs.viewerui.ui.core.entities.PageResource;
+import com.groupdocs.viewerui.ui.core.entities.*;
 import com.groupdocs.viewerui.ui.core.extensions.CopyExtensions;
 import com.groupdocs.viewerui.ui.core.extensions.UrlExtensions;
 import org.slf4j.Logger;
@@ -45,7 +44,12 @@ public class HtmlWithExternalResourcesViewer extends BaseViewer {
 
     @Override
     public String getPageExtension() {
-        return HtmlPage.EXTENSION;
+        return HtmlPage.DEFAULT_EXTENSION;
+    }
+
+    @Override
+    public String getThumbExtension() {
+        return JpgThumb.DEFAULT_EXTENSION;
     }
 
     @Override
@@ -54,13 +58,18 @@ public class HtmlWithExternalResourcesViewer extends BaseViewer {
     }
 
     @Override
+    public Thumb createThumb(int pageNumber, byte[] data) {
+        return new JpgThumb(pageNumber, data);
+    }
+
+    @Override
     protected Page renderPage(Viewer viewer, String filePath, int pageNumber) {
         String basePath = _apiOptions.getApiEndpoint();
-        String actionName = Constants.LOAD_DOCUMENT_PAGE_RESOURCE_ACTION_NAME;
+        String actionName = ApiNames.API_METHOD_GET_RESOURCE;
         try {
             MemoryPageStreamFactory streamFactory = new MemoryPageStreamFactory(basePath, actionName, filePath);
             HtmlViewOptions viewOptions = HtmlViewOptions.forExternalResources(streamFactory, streamFactory);
-            CopyExtensions.copyHtmlViewOptions(_viewerConfig.getHtmlViewOptions(), viewOptions);
+            CopyExtensions.copyViewOptions(_viewerConfig.getHtmlViewOptions(), viewOptions);
             viewer.view(viewOptions, pageNumber);
 
             PageContents pageContents = streamFactory.getPageContents();
@@ -78,6 +87,26 @@ public class HtmlWithExternalResourcesViewer extends BaseViewer {
     }
 
     @Override
+    protected Thumb renderThumb(Viewer viewer, String filePath, int pageNumber) {
+
+        try (ByteArrayOutputStream thumbStream = new ByteArrayOutputStream()) {
+            JpgViewOptions thumbViewOptions = createThumbViewOptions(thumbStream);
+            viewer.view(thumbViewOptions, pageNumber);
+
+            byte[] thumbBytes = thumbStream.toByteArray();
+        if (thumbBytes.length == 0) {
+            LOGGER.warn("Thumb for page {} of '{}' document has no data.", pageNumber, filePath);
+        }
+
+            Thumb thumb = createThumb(pageNumber, thumbBytes);
+            return thumb;
+        } catch (Exception e) {
+            LOGGER.error("Exception throws while rendering thumb for html with external resources: filePath={}, pageNumber={}", filePath, pageNumber, e);
+            throw new ViewerUiException(e);
+        }
+    }
+
+    @Override
     protected ViewInfoOptions createViewInfoOptions() {
         return ViewInfoOptions.fromHtmlViewOptions(_viewerConfig.getHtmlViewOptions());
     }
@@ -88,6 +117,19 @@ public class HtmlWithExternalResourcesViewer extends BaseViewer {
         PageResource resource = page.getResource(resourceName);
 
         return resource.getData();
+    }
+
+    private JpgViewOptions createThumbViewOptions(OutputStream pageStream) {
+        JpgViewOptions viewOptions = new JpgViewOptions(i -> pageStream,
+                (i, closeable) -> { /*NOTE: Do nothing here*/ });
+
+        CopyExtensions.copyBaseViewOptions(_viewerConfig.getHtmlViewOptions(), viewOptions);
+        viewOptions.setExtractText(false);
+        viewOptions.setQuality((byte) ThumbSettings.THUMB_QUALITY);
+        viewOptions.setMaxWidth(ThumbSettings.MAX_THUMB_WIDTH);
+        viewOptions.setMaxHeight(ThumbSettings.MAX_THUMB_HEIGHT);
+
+        return viewOptions;
     }
 
     private class MemoryPageStreamFactory implements PageStreamFactory, ResourceStreamFactory {
