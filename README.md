@@ -21,7 +21,7 @@ User Interface for GroupDocs.Viewer for Java. API for easily integrating a docum
       <dependency>
         <groupId>com.groupdocs</groupId>
         <artifactId>groupdocs-viewer-ui</artifactId>
-        <version>24.12</version>
+        <version>24.12.1</version>
       </dependency>
 
       <dependency>
@@ -49,8 +49,6 @@ User Interface for GroupDocs.Viewer for Java. API for easily integrating a docum
    public class ViewerConfiguration {
    public static final String VIEWER_UI_PATH = "/viewer";
    
-       public static final String VIEWER_CONFIG_ENDPOINT = "/viewer-config";
-   
        public static final String VIEWER_API_ENDPOINT = "/viewer-api";
    
        private JakartaViewerEndpointHandler _viewerEndpointHandler;
@@ -59,15 +57,18 @@ User Interface for GroupDocs.Viewer for Java. API for easily integrating a docum
        public void init() {
            _viewerEndpointHandler = JakartaViewerEndpointHandler
                    .setupGroupDocsViewer((viewerConfig, config) -> {
-                       viewerConfig.setViewerType(ViewerType.PNG);
+                       final ViewerType viewerType = ViewerType.PNG;
    
-                       config.setPreloadPageCount(2);
+                      viewerConfig.setViewerType(viewerType);
+                      // viewerConfig.setLicensePath("GroupDocs.Viewer.Product.Family.lic");
+   
+                       config.setPreloadPages(2);
                        config.setBaseUrl("http://127.0.0.1:8080");
+                       config.setRenderingMode(viewerType.toRenderingMode());
                    })
    
                    .setupGroupDocsViewerUI(uiOptions -> {
                        uiOptions.setUiPath(VIEWER_UI_PATH);
-                       uiOptions.setUiConfigEndpoint(VIEWER_CONFIG_ENDPOINT);
                    })
                    .setupGroupDocsViewerApi(apiOptions -> {
                        apiOptions.setApiEndpoint(VIEWER_API_ENDPOINT);
@@ -102,7 +103,6 @@ User Interface for GroupDocs.Viewer for Java. API for easily integrating a docum
 		}
 	
 		@GetMapping({ ViewerConfiguration.VIEWER_UI_PATH, ViewerConfiguration.VIEWER_UI_PATH + "/**",
-				ViewerConfiguration.VIEWER_CONFIG_ENDPOINT, ViewerConfiguration.VIEWER_CONFIG_ENDPOINT + "/**",
 				ViewerConfiguration.VIEWER_API_ENDPOINT, ViewerConfiguration.VIEWER_API_ENDPOINT + "/**" })
 		public void handleViewerUiRequest(HttpServletRequest request, HttpServletResponse response) {
 			this._viewerEndpointHandler.handleViewerRequest(request, response);
