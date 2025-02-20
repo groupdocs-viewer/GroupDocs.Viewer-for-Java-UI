@@ -543,6 +543,9 @@ public class CommonViewerEndpointHandler {
             }
             resourcePath = Paths.get(uiPath).normalize().relativize(Paths.get(path)).toString();
         }
+        if (resourcePath.contains("\\")) {
+            resourcePath = resourcePath.replaceAll("\\\\", "/");
+        }
 
         if (resourcePath.startsWith("/")) {
             resourcePath = resourcePath.substring(1);

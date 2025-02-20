@@ -1,13 +1,16 @@
 package com.groupdocs.viewerui.ui.core;
 
-import java.io.IOException;
-import java.net.FileNameMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class DefaultContentTypeDetector implements IContentTypeDetector {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultContentTypeDetector.class);
+
     /**
      * Detects the content type of the given resource name.
      *
@@ -16,15 +19,21 @@ public class DefaultContentTypeDetector implements IContentTypeDetector {
      */
     @Override
     public String detect(String resourceName) {
-        FileNameMap fileNameMap = URLConnection.getFileNameMap();
-        String contentType = fileNameMap.getContentTypeFor(resourceName);
+        String contentType = URLConnection.guessContentTypeFromName(resourceName);
         if (contentType == null) {
-            Path path = Paths.get(resourceName);
-            try {
-                contentType = Files.probeContentType(path);
-            } catch (IOException e) {
-                return "application/octet-stream";
+            if (resourceName.endsWith(".woff") || resourceName.endsWith(".woff2")) {
+                contentType = "application/x-font-woff";
+            } else {
+                try {
+                    Path path = Paths.get(resourceName);
+                    contentType = Files.probeContentType(path);
+                } catch (Exception e2) {
+                    LOGGER.trace("Content type for '{}' was not detected, using 'application/octet-stream'", resourceName);
+                }
             }
+        }
+        if (contentType == null) {
+            contentType = "application/octet-stream";
         }
 
         return contentType;

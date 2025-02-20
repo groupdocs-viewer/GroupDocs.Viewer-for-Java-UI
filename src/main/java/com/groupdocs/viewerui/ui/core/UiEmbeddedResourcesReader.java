@@ -3,6 +3,8 @@ package com.groupdocs.viewerui.ui.core;
 import com.groupdocs.viewerui.Keys;
 import com.groupdocs.viewerui.exception.ViewerUiException;
 import com.groupdocs.viewerui.ui.core.extensions.StreamExtensions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class UiEmbeddedResourcesReader implements IUiResourcesReader {
+    private static final Logger LOGGER = LoggerFactory.getLogger(UiEmbeddedResourcesReader.class);
 
     private static final String BASIC_RESOURCE_PATH = "com/groupdocs/viewerui";
     private List<UiResource> _cachedUiResources = null;
@@ -18,6 +21,10 @@ public class UiEmbeddedResourcesReader implements IUiResourcesReader {
 
     @Override
     public UiResource getUiResource(String resourceName) throws IOException {
+        if (resourceName.contains("\\")) {
+            LOGGER.error("Resource name is not valid (contains '\\' character): {}", resourceName);
+            throw new ViewerUiException("Resource name is not valid (contains '\\' character): " + resourceName);
+        }
         if (_cachedUiResources == null) {
             _cachedUiResources = new ArrayList<>();
             final UiResource uiResource = loadAndAddUiResource(getClass().getClassLoader(), resourceName, getContentTypeDetector());
@@ -39,6 +46,7 @@ public class UiEmbeddedResourcesReader implements IUiResourcesReader {
         try (final InputStream resourceAsStream = classLoader
                 .getResourceAsStream(BASIC_RESOURCE_PATH + "/" + resourceName)) {
             if (resourceAsStream == null) {
+                LOGGER.error("Failed loading UI resource (not found): {}", BASIC_RESOURCE_PATH + "/" + resourceName);
                 throw new ViewerUiException(
                         "Resource with name '" + Keys.GROUPDOCSVIEWERUI_MAIN_UI_RESOURCE + "' was not found");
             }
