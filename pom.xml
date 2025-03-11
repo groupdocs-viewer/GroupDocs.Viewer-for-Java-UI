@@ -6,7 +6,7 @@
 
     <groupId>com.groupdocs</groupId>
     <artifactId>groupdocs-viewer-ui</artifactId>
-    <version>24.12.2</version>
+    <version>25.2</version>
     <packaging>jar</packaging>
 
     <name>GroupDocs.Viewer for Java User Interface</name>
@@ -54,7 +54,7 @@
         <dependency>
             <groupId>com.groupdocs</groupId>
             <artifactId>groupdocs-viewer</artifactId>
-            <version>24.12</version>
+            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

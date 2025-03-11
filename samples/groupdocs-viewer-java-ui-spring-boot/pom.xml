@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.example</groupId>
 	<artifactId>groupdocs-viewer-java-ui-spring-boot</artifactId>
-	<version>24.12.2</version>
+	<version>25.2</version>
 	<name>demo</name>
 	<description>Demo project for Spring Boot</description>
 	<properties>
@@ -37,7 +37,7 @@
 		<dependency>
 			<groupId>com.groupdocs</groupId>
 			<artifactId>groupdocs-viewer</artifactId>
-			<version>24.12</version>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
